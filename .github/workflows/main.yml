@@ -1,0 +1,98 @@
+name: Update Stock Data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 10 * * 1-6"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install packages
+        run: pip install yfinance pandas
+
+      - name: Download stock data
+        run: |
+          python - <<'PY'
+          import yfinance as yf
+          import json
+          from datetime import datetime, timezone
+
+          symbols = {
+              "nikkei": "^N225",
+              "nasdaq": "^IXIC"
+          }
+
+          result = {}
+
+          for name, symbol in symbols.items():
+              df = yf.download(
+                  symbol,
+                  period="5y",
+                  interval="1d",
+                  auto_adjust=False,
+                  progress=False
+              )
+
+              if df.empty:
+                  raise RuntimeError(f"No data received for {symbol}")
+
+              close = df["Close"]
+              if getattr(close, "ndim", 1) > 1:
+                  close = close.iloc[:, 0]
+
+              records = {}
+              for i in range(len(close)):
+                  value = float(close.iloc[i])
+                  if i > 0:
+                      previous = float(close.iloc[i - 1])
+                      change = round(value - previous, 2)
+                      pct = round((value / previous - 1) * 100, 2)
+                  else:
+                      change = None
+                      pct = None
+
+                  day = close.index[i].strftime("%Y-%m-%d")
+                  records[day] = {
+                      "close": round(value, 2),
+                      "change": change,
+                      "pct": pct
+                  }
+
+              result[name] = records
+              print(f"{name}: {len(records)} records")
+
+          output = {
+              "updatedAt": datetime.now(timezone.utc).isoformat(),
+              "data": result
+          }
+
+          with open("data.json", "w", encoding="utf-8") as f:
+              json.dump(output, f, ensure_ascii=False)
+
+          print("data.json created successfully")
+          PY
+
+      - name: Save updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update stock market data"
+            git push origin HEAD:main
+          else
+            echo "No data changes"
+          fi
