@@ -22,6 +22,8 @@ select{flex:1;min-width:0}
 .day{min-width:0;min-height:94px;padding:6px 3px;background:var(--card);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
 .day.up{background:var(--green)}
 .day.down{background:var(--red)}
+.day.holiday{background:#303030;border-color:#454545;color:#f0c674}
+.day.missing{background:#242424;border-color:#665b42}
 .day.selected{outline:2px solid var(--accent)}
 .day.empty{background:transparent;border-color:transparent}
 .date{font-size:11px;color:#ddd}
@@ -29,6 +31,8 @@ select{flex:1;min-width:0}
 .change,.pct{font-size:clamp(9px,2vw,12px);white-space:nowrap}
 .uptext{color:#91efb4}.downtext{color:#ffaaaa}
 .muted{color:var(--muted)}
+.day-status{font-size:10px;line-height:1.2;font-weight:700;white-space:nowrap}
+.holiday-text{color:#f0c674}.missing-text{color:#d9bd83}
 .legend{display:flex;justify-content:center;gap:16px;margin:14px 0;color:var(--muted);font-size:12px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px;margin-top:14px}
 .big{font-size:28px;font-weight:800;margin:5px 0}
@@ -59,7 +63,7 @@ select{flex:1;min-width:0}
 <div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div><div>日</div>
 </div>
 <div id="calendar" class="calendar"></div>
-<div class="legend"><span>🟢 上昇</span><span>🔴 下落</span><span>— 未登録</span></div>
+<div class="legend"><span>🟢 上昇</span><span>🔴 下落</span><span>🟡 休場</span><span>⚠️ データ未取得</span></div>
 <section class="panel" id="detail">
 <div class="muted">日付を選択してください</div>
 <div class="note">株価データの接続準備中です。</div>
@@ -84,7 +88,38 @@ let selected = key(year, month, today.getDate());
 let prices = {};
 let index = 'nikkei';
 
+
 const fmt = n => Math.abs(n).toLocaleString('ja-JP');
+
+// 日本市場・米国市場の主な休場日（2024〜2027年）
+// 土日は曜日から判定。祝日・臨時休場の情報は必要に応じて更新する。
+const jpHolidays = new Set([
+'2024-01-01','2024-01-02','2024-01-03','2024-01-08','2024-02-11','2024-02-12','2024-02-23','2024-03-20','2024-04-29','2024-05-03','2024-05-04','2024-05-05','2024-05-06','2024-07-15','2024-08-11','2024-08-12','2024-09-16','2024-09-22','2024-09-23','2024-10-14','2024-11-03','2024-11-04','2024-11-23',
+'2025-01-01','2025-01-02','2025-01-03','2025-01-13','2025-02-11','2025-02-23','2025-02-24','2025-03-20','2025-04-29','2025-05-03','2025-05-04','2025-05-05','2025-05-06','2025-07-21','2025-08-11','2025-09-15','2025-09-23','2025-10-13','2025-11-03','2025-11-23','2025-11-24',
+'2026-01-01','2026-01-02','2026-01-03','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12','2026-11-03','2026-11-23',
+'2027-01-01','2027-01-02','2027-01-03','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22','2027-04-29','2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11','2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23'
+]);
+const usMarketHolidays = new Set([
+'2024-01-01','2024-01-15','2024-02-19','2024-03-29','2024-05-27','2024-06-19','2024-07-04','2024-09-02','2024-11-28','2024-12-25',
+'2025-01-01','2025-01-09','2025-01-20','2025-02-17','2025-04-18','2025-05-26','2025-06-19','2025-07-04','2025-09-01','2025-11-27','2025-12-25',
+'2026-01-01','2026-01-19','2026-02-16','2026-04-03','2026-05-25','2026-06-19','2026-07-03','2026-09-07','2026-11-26','2026-12-25',
+'2027-01-01','2027-01-18','2027-02-15','2027-03-26','2027-05-31','2027-06-18','2027-07-05','2027-09-06','2027-11-25','2027-12-24'
+]);
+function marketStatus(dateKey, market) {
+  const [y,m,d] = dateKey.split('-').map(Number);
+  const dt = new Date(y,m-1,d);
+  const weekday = dt.getDay();
+  if (weekday === 0 || weekday === 6) return 'holiday';
+  if (market === 'nasdaq') return usMarketHolidays.has(dateKey) ? 'holiday' : 'trading';
+  return jpHolidays.has(dateKey) ? 'holiday' : 'trading';
+}
+function dayStatusLabel(dateKey, market, hasPrice) {
+  const status = marketStatus(dateKey, market);
+  if (status === 'holiday') return { status:'holiday', label:'休場' };
+  if (hasPrice) return { status:'trading', label:'' };
+  return { status:'missing', label:'未取得' };
+}
+
 
 async function loadPrices() {
   $('status').textContent = '株価データ：読み込み中…';
@@ -121,8 +156,9 @@ function render() {
   for (let d = 1; d <= total; d++) {
     const k = key(year, month, d);
     const v = prices[index]?.[k];
+    const state = dayStatusLabel(k, index, !!v);
     const b = document.createElement('button');
-    b.className = 'day' + (v ? (v.change > 0 ? ' up' : v.change < 0 ? ' down' : '') : '') + (selected === k ? ' selected' : '');
+    b.className = 'day' + (v ? (v.change > 0 ? ' up' : v.change < 0 ? ' down' : '') : state.status === 'holiday' ? ' holiday' : ' missing') + (selected === k ? ' selected' : '');
     let html = `<span class="date">${d}</span>`;
     if (v) {
       count++;
@@ -132,7 +168,7 @@ function render() {
       html += `<span class="change">${v.change > 0 ? '+' : v.change < 0 ? '−' : '±'}${fmt(v.change)}</span>`;
       html += `<span class="pct">${v.pct > 0 ? '+' : ''}${Number(v.pct).toFixed(2)}%</span>`;
     } else {
-      html += '<span class="muted" style="font-size:11px">—</span>';
+      html += `<span class="day-status ${state.status === 'holiday' ? 'holiday-text' : 'missing-text'}">${state.label}</span>`;
     }
     b.innerHTML = html;
     b.addEventListener('click', () => { selected = k; render(); });
@@ -150,7 +186,9 @@ function render() {
     `<div class="muted">${p[0]}年${p[1]}月${p[2]}日（${weekdays[dt.getDay()]}）</div>` +
     (v
       ? `<div class="big">${fmt(v.close)}${index === 'nasdaq' ? '' : '円'}</div><div class="${v.change >= 0 ? 'uptext' : 'downtext'}">${v.change > 0 ? '▲' : v.change < 0 ? '▼' : '—'} ${v.change > 0 ? '+' : v.change < 0 ? '−' : ''}${fmt(v.change)}　${v.pct > 0 ? '+' : ''}${Number(v.pct).toFixed(2)}%</div>`
-      : '<div class="big">データ未登録</div><div class="note">この日付のデータはありません。</div>');
+      : marketStatus(selected, index) === 'holiday'
+        ? '<div class="big" style="color:#f0c674">休場日</div><div class="note">この市場はこの日に取引を行っていません。</div>'
+        : '<div class="big">データ未取得</div><div class="note">取引日と考えられますが、株価データがありません。自動更新後も表示されない場合はデータ取得を確認してください。</div>');
 }
 
 $('prev').onclick = () => {
