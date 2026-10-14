@@ -1,0 +1,85 @@
+name: Diagnose Yahoo Japan Index Data
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compare Yahoo chart endpoints and date parameters
+        run: |
+          python - <<'PY'
+          import time
+          from datetime import datetime, timedelta, timezone
+          from urllib.parse import quote
+          from zoneinfo import ZoneInfo
+
+          import requests
+
+          symbols = {
+              "nikkei": "^N225",
+              "topix_index": "^TPX",
+              "topix_etf": "1306.T",
+              "growth250_etn": "2042.T",
+          }
+          session = requests.Session()
+          session.headers.update({
+              "User-Agent": "Mozilla/5.0 (compatible; StockCalendarDiagnostics/1.0)",
+              "Accept": "application/json",
+          })
+          now = datetime.now(timezone.utc)
+          period1 = int((now - timedelta(days=14)).timestamp())
+          period2 = int((now + timedelta(days=2)).timestamp())
+
+          def inspect(symbol, host, mode):
+              url = f"https://{host}/v8/finance/chart/{quote(symbol, safe='')}"
+              if mode == "range=5d":
+                  params = {"range": "5d", "interval": "1d"}
+              elif mode == "range=5y":
+                  params = {"range": "5y", "interval": "1d"}
+              else:
+                  params = {"period1": period1, "period2": period2, "interval": "1d"}
+              try:
+                  response = session.get(url, params=params, timeout=25)
+                  print(f"\nTEST symbol={symbol} host={host} mode={mode} HTTP={response.status_code}")
+                  response.raise_for_status()
+                  payload = response.json().get("chart", {})
+                  if payload.get("error"):
+                      print(f"  API_ERROR: {payload['error']}")
+                      return
+                  results = payload.get("result") or []
+                  if not results:
+                      print("  NO_RESULT")
+                      return
+                  result = results[0]
+                  meta = result.get("meta") or {}
+                  tz_name = meta.get("exchangeTimezoneName", "Asia/Tokyo")
+                  tz = ZoneInfo(tz_name)
+                  timestamps = result.get("timestamp") or []
+                  closes = ((result.get("indicators") or {}).get("quote") or [{}])[0].get("close") or []
+                  rows = []
+                  for stamp, close in zip(timestamps, closes):
+                      if close is not None:
+                          rows.append((datetime.fromtimestamp(stamp, tz).strftime("%Y-%m-%d"), close))
+                  print(f"  meta.symbol={meta.get('symbol')} timezone={tz_name} rows={len(rows)}")
+                  print(f"  regularMarketTime={meta.get('regularMarketTime')} regularMarketPrice={meta.get('regularMarketPrice')}")
+                  print(f"  last_rows={rows[-5:]}")
+              except Exception as exc:
+                  print(f"  REQUEST_ERROR: {type(exc).__name__}: {exc}")
+
+          for name, symbol in symbols.items():
+              print(f"\n========== {name} ({symbol}) ==========")
+              for host in ("query1.finance.yahoo.com", "query2.finance.yahoo.com"):
+                  for mode in ("range=5d", "explicit_period", "range=5y"):
+                      inspect(symbol, host, mode)
+                      time.sleep(1)
+          PY
