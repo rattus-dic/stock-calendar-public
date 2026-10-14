@@ -96,9 +96,10 @@ select{flex:1;min-width:0}
   <h3 style="margin-top:0">マーケット指標</h3>
   <p class="note">原油・日米10年国債利回り。取得元や更新タイミングにより、最新値の日付が異なる場合があります。</p>
   <div class="metrics">
-    <div class="metric"><span class="muted">WTI原油先物（USD/バレル）</span><strong id="wtiValue">—</strong><span class="note" id="wtiDate">未取得</span></div>
-    <div class="metric"><span class="muted">米国10年国債利回り（%）</span><strong id="us10yValue">—</strong><span class="note" id="us10yDate">未取得</span></div>
     <div class="metric"><span class="muted">日本10年国債利回り（%）</span><strong id="jp10yValue">—</strong><span class="note" id="jp10yDate">未取得</span></div>
+    <div class="metric"><span class="muted">米国10年国債利回り（%）</span><strong id="us10yValue">—</strong><span class="note" id="us10yDate">未取得</span></div>
+    <div class="metric"><span class="muted">WTI原油先物（USD/バレル）</span><strong id="wtiValue">—</strong><span class="note" id="wtiDate">未取得</span></div>
+    <div class="metric"><span class="muted">北海ブレント原油先物（USD/バレル）</span><strong id="brentValue">—</strong><span class="note" id="brentDate">未取得</span></div>
   </div>
 </section>
 <section class="panel" id="indicatorHistory">
@@ -109,6 +110,7 @@ select{flex:1;min-width:0}
       <option value="jp10y">日本10年国債利回り（%）</option>
       <option value="us10y">米国10年国債利回り（%）</option>
       <option value="wti">WTI原油先物（USD/バレル）</option>
+      <option value="brent">北海ブレント原油先物（USD/バレル）</option>
     </select>
     <select id="historyRange" aria-label="履歴期間">
       <option value="7">過去1週間</option>
@@ -205,16 +207,17 @@ function renderIndicators() {
     value == null || !Number.isFinite(Number(value)) ? '—' :
     Number(value).toLocaleString('ja-JP', { maximumFractionDigits: digits, minimumFractionDigits: digits });
   const defs = [
-    ['wti', 'wtiValue', 'wtiDate', 2, 'USD/バレル'],
+    ['jp10y', 'jp10yValue', 'jp10yDate', 3, '%'],
     ['us10y', 'us10yValue', 'us10yDate', 3, '%'],
-    ['jp10y', 'jp10yValue', 'jp10yDate', 3, '%']
+    ['wti', 'wtiValue', 'wtiDate', 2, 'USD/バレル'],
+    ['brent', 'brentValue', 'brentDate', 2, 'USD/バレル']
   ];
   for (const [key, valueId, dateId, digits, unit] of defs) {
     const item = indicators[key] || {};
     const latest = item.latest;
     const previous = item.previous;
     const valueEl = $(valueId);
-    valueEl.innerHTML = latest ? (key === 'wti' ? `<span class="metric-number">${fmtValue(latest.value, digits)}</span><span class="unit-small"> USD/バレル</span>` : `${fmtValue(latest.value, digits)} ${unit}`) : '取得できません';
+    valueEl.innerHTML = latest ? (['wti', 'brent'].includes(key) ? `<span class="metric-number">${fmtValue(latest.value, digits)}</span><span class="unit-small"> USD/バレル</span>` : `${fmtValue(latest.value, digits)} ${unit}`) : '取得できません';
     valueEl.className = 'indicator-value';
     if (latest && previous && Number.isFinite(Number(previous.value))) {
       const delta = Number(latest.value) - Number(previous.value);
@@ -222,7 +225,7 @@ function renderIndicators() {
     } else {
       valueEl.classList.add('neutral');
     }
-    $(dateId).textContent = latest ? `基準日：${latest.date || '不明'}${key === 'jp10y' && item.source ? '（財務省）' : ''}` : 'データ未取得';
+    $(dateId).textContent = latest ? `基準日：${latest.date || '不明'}` : 'データ未取得';
   }
 }
 
@@ -249,8 +252,8 @@ function normalizeHistory(json) {
 function renderIndicatorHistory() {
   const metric = $('historyMetric').value;
   const range = $('historyRange').value;
-  const label = { wti: 'WTI原油（USD/バレル）', us10y: '米国10年債（%）', jp10y: '日本10年債（%）' }[metric];
-  const digits = metric === 'wti' ? 2 : 3;
+  const label = { jp10y: '日本10年債（%）', us10y: '米国10年債（%）', wti: 'WTI原油（USD/バレル）', brent: '北海ブレント原油（USD/バレル）' }[metric];
+  const digits = ['wti', 'brent'].includes(metric) ? 2 : 3;
   let rows = indicatorHistory
     .map(row => ({ date: row.date, value: Number(row[metric]) }))
     .filter(row => Number.isFinite(row.value));
@@ -308,7 +311,9 @@ function renderIndicatorHistory() {
   if (range === '1825' || range === '3650' || range === 'all' && spanDays >= 900) {
     const firstYear = Number(rows[0].date.slice(0,4));
     const lastYear = Number(rows[rows.length-1].date.slice(0,4));
-    for (let yr=firstYear; yr<=lastYear; yr++) {
+    const yearInterval = range === 'all' ? 5 : 1;
+    const startYear = range === 'all' ? Math.ceil(firstYear / 5) * 5 : firstYear;
+    for (let yr=startYear; yr<=lastYear; yr += yearInterval) {
       const date = `${yr}-01-01`;
       const xx = xForDate(date);
       if (xx >= left-1 && xx <= width-right+1) {
