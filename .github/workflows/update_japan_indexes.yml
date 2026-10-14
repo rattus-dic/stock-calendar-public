@@ -1,0 +1,111 @@
+name: Update Japan Stock Indexes
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * 1-5" # 17:00 JST, Monday-Friday
+
+permissions:
+  contents: write
+
+# Prevent concurrent writes with the morning market-indicator workflow.
+concurrency:
+  group: stock-data-update
+  cancel-in-progress: false
+
+jobs:
+  update-japan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install packages
+        run: pip install yfinance pandas
+
+      - name: Download Japanese index data
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          import pandas as pd
+          import yfinance as yf
+
+          symbols = {
+              "nikkei": "^N225",
+              "topix": "1306.T",
+              # This is an ETN linked to Growth 250, not the index itself.
+              "growth250": "2042.T",
+          }
+
+          updates = {}
+          for name, symbol in symbols.items():
+              print(f"Downloading {name}: {symbol}", flush=True)
+              hist = yf.Ticker(symbol).history(
+                  period="5y",
+                  interval="1d",
+                  auto_adjust=False,
+                  raise_errors=True,
+              )
+              if hist is None or hist.empty or "Close" not in hist:
+                  raise RuntimeError(f"No data received for {symbol}")
+
+              close = hist["Close"].dropna()
+              if close.empty:
+                  raise RuntimeError(f"No valid closing prices for {symbol}")
+
+              rows = {}
+              previous = None
+              for ts, raw_value in close.items():
+                  value = float(raw_value)
+                  change = value - previous if previous is not None else None
+                  pct = (change / previous * 100.0) if previous not in (None, 0) else None
+                  day = pd.Timestamp(ts).strftime("%Y-%m-%d")
+                  rows[day] = {
+                      "close": round(value, 4),
+                      "change": round(change, 4) if change is not None else None,
+                      "pct": round(pct, 4) if pct is not None else None,
+                  }
+                  previous = value
+
+              updates[name] = rows
+              print(
+                  f"{name}: {len(rows)} rows; latest={next(reversed(rows))}",
+                  flush=True,
+              )
+
+          # Preserve US index data and all market indicators already in data.json.
+          path = Path("data.json")
+          payload = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+          existing_data = payload.get("data")
+          if not isinstance(existing_data, dict):
+              existing_data = {}
+
+          existing_data.update(updates)
+          payload["data"] = existing_data
+          payload["updatedAt"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+          path.write_text(
+              json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+              encoding="utf-8",
+          )
+          print("Updated Japanese indexes in data.json", flush=True)
+          PY
+
+      - name: Commit updated data
+        run: |
+          if git diff --quiet -- data.json; then
+            echo "No Japanese index data changes."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data.json
+            git commit -m "Update Japanese stock indexes"
+            git push origin HEAD:main
+          fi
