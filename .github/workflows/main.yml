@@ -32,7 +32,7 @@ jobs:
 
           symbols = {
               "nikkei": "^N225",
-              "topix": "998405.T",
+              "topix": "1306.T",
               "nasdaq": "^IXIC",
               # グロース250連動ETN
               "growth250": "2042.T",
