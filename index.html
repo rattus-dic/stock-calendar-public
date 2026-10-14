@@ -214,7 +214,7 @@ function renderIndicators() {
     const latest = item.latest;
     const previous = item.previous;
     const valueEl = $(valueId);
-    valueEl.innerHTML = latest ? (key === 'wti' ? `${fmtValue(latest.value, digits)} <span class="unit-small">USD/バレル</span>` : `${fmtValue(latest.value, digits)} ${unit}`) : '取得できません';
+    valueEl.innerHTML = latest ? (key === 'wti' ? `<span class="metric-number">${fmtValue(latest.value, digits)}</span><span class="unit-small"> USD/バレル</span>` : `${fmtValue(latest.value, digits)} ${unit}`) : '取得できません';
     valueEl.className = 'indicator-value';
     if (latest && previous && Number.isFinite(Number(previous.value))) {
       const delta = Number(latest.value) - Number(previous.value);
