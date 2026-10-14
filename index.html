@@ -214,7 +214,7 @@ function renderIndicators() {
     const latest = item.latest;
     const previous = item.previous;
     const valueEl = $(valueId);
-    valueEl.textContent = latest ? `${fmtValue(latest.value, digits)} ${unit}` : '取得できません';
+    valueEl.innerHTML = latest ? (key === 'wti' ? `${fmtValue(latest.value, digits)} <span class="unit-small">USD/バレル</span>` : `${fmtValue(latest.value, digits)} ${unit}`) : '取得できません';
     valueEl.className = 'indicator-value';
     if (latest && previous && Number.isFinite(Number(previous.value))) {
       const delta = Number(latest.value) - Number(previous.value);
@@ -255,7 +255,10 @@ function renderIndicatorHistory() {
     .map(row => ({ date: row.date, value: Number(row[metric]) }))
     .filter(row => Number.isFinite(row.value));
 
-  if (range !== 'all' && rows.length) {
+  if (range === '7') {
+    // 「1週間」は暦日ではなく、最新のデータが存在する7営業日分を表示する。
+    rows = rows.slice(-7);
+  } else if (range !== 'all' && rows.length) {
     const cutoff = new Date();
     cutoff.setHours(0, 0, 0, 0);
     cutoff.setDate(cutoff.getDate() - Number(range));
@@ -312,6 +315,12 @@ function renderIndicatorHistory() {
         xTicks.push(`<line x1="${xx}" y1="${top}" x2="${xx}" y2="${height-bottom}" stroke="#383838" stroke-dasharray="3 4"/><text x="${xx}" y="${height-12}" fill="#aaa" font-size="11" text-anchor="middle">${yr}</text>`);
       }
     }
+  } else if (range === '7') {
+    // 1週間表示では、7営業日分の日付をすべて横軸に表示する。
+    xTicks = plotted.map(row => {
+      const xx = xForDate(row.date);
+      return `<line x1="${xx}" y1="${top}" x2="${xx}" y2="${height-bottom}" stroke="#383838" stroke-dasharray="2 4"/><text x="${xx}" y="${height-12}" fill="#aaa" font-size="11" text-anchor="middle">${row.date.slice(5).replace('-','/')}</text>`;
+    });
   } else {
     const labels = [...new Set([rows[0].date, rows[Math.floor((rows.length-1)/2)].date, rows[rows.length-1].date])];
     xTicks = labels.map((date,i) => {
@@ -321,7 +330,7 @@ function renderIndicatorHistory() {
     });
   }
 
-  chart.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}の履歴グラフ" style="display:block;width:100%;height:auto"><rect width="${width}" height="${height}" fill="transparent"/>${grid}${xTicks.join('')}<polyline points="${points}" fill="none" stroke="#65a9ff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+  chart.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}の履歴グラフ" style="display:block;width:100%;height:auto"><rect width="${width}" height="${height}" fill="transparent"/>${grid}${xTicks.join('')}<polyline points="${points}" fill="none" stroke="#65a9ff" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
   // 表は最新の7件に限定して、スマートフォンでも見やすくする。
   $('historyRows').innerHTML = rows.slice(-7).reverse().map(row =>
     `<tr><td style="padding:8px;border-bottom:1px solid var(--line)">${row.date}</td><td style="text-align:right;padding:8px;border-bottom:1px solid var(--line)">${row.value.toLocaleString('ja-JP',{minimumFractionDigits:digits,maximumFractionDigits:digits})}</td></tr>`
