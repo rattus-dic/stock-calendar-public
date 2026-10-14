@@ -84,6 +84,7 @@ jobs:
           daily_indicator_history = {}
           indicator_symbols = {
               "wti": "CL=F",
+              "brent": "BZ=F",
               "us10y": "^TNX",
           }
 
