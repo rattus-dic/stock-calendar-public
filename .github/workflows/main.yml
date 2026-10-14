@@ -131,7 +131,7 @@ jobs:
               mof_df = None
               for encoding in ("cp932", "utf-8-sig", "shift_jis"):
                   try:
-                      candidate = pd.read_csv(BytesIO(response.content), encoding=encoding)
+                      candidate = pd.read_csv(BytesIO(response.content), encoding=encoding, header=1)
                       print("MOF CSV preview:", candidate.head(8).to_string())
                       if not candidate.empty:
                           mof_df = candidate
