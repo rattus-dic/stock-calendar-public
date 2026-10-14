@@ -26,7 +26,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install packages
-        run: pip install yfinance pandas
+        run: pip install requests
 
       - name: Download Japanese index data
         run: |
@@ -35,9 +35,10 @@ jobs:
           import time
           from datetime import datetime, timezone
           from pathlib import Path
+          from urllib.parse import quote
+          from zoneinfo import ZoneInfo
 
-          import pandas as pd
-          import yfinance as yf
+          import requests
 
           symbols = {
               "nikkei": "^N225",
@@ -46,29 +47,48 @@ jobs:
               "growth250": "2042.T",
           }
           max_attempts = 3
+          session = requests.Session()
+          session.headers.update({"User-Agent": "Mozilla/5.0 (compatible; StockCalendar/1.0)"})
 
           def download_close(name, symbol):
-              """Try a symbol independently; never let one failure stop others."""
+              """Fetch daily closes directly from Yahoo Finance's chart endpoint."""
+              url = f"https://query1.finance.yahoo.com/v8/finance/chart/{quote(symbol, safe='')}"
               for attempt in range(1, max_attempts + 1):
                   try:
                       print(
-                          f"Downloading {name} ({symbol}), attempt {attempt}/{max_attempts}",
+                          f"Downloading {name} ({symbol}) via Yahoo chart API, attempt {attempt}/{max_attempts}",
                           flush=True,
                       )
-                      hist = yf.Ticker(symbol).history(
-                          period="5y",
-                          interval="1d",
-                          auto_adjust=False,
-                          raise_errors=True,
+                      response = session.get(
+                          url,
+                          params={"range": "5y", "interval": "1d", "events": "history"},
+                          timeout=30,
                       )
-                      if hist is None or hist.empty or "Close" not in hist:
-                          raise RuntimeError("No data received or Close column missing")
-                      close = hist["Close"].dropna()
-                      if close.empty:
-                          raise RuntimeError("No valid closing prices")
-                      latest = pd.Timestamp(close.index[-1]).strftime("%Y-%m-%d")
-                      print(f"{name}: received {len(close)} rows; latest={latest}", flush=True)
-                      return close
+                      response.raise_for_status()
+                      body = response.json().get("chart", {})
+                      if body.get("error"):
+                          raise RuntimeError(f"Yahoo chart API error: {body['error']}")
+                      results = body.get("result") or []
+                      if not results:
+                          raise RuntimeError("Yahoo chart API returned no result")
+                      result = results[0]
+                      timestamps = result.get("timestamp") or []
+                      quote_rows = (result.get("indicators", {}).get("quote") or [{}])[0]
+                      closes = quote_rows.get("close") or []
+                      exchange_tz = (result.get("meta") or {}).get("exchangeTimezoneName", "Asia/Tokyo")
+                      tz = ZoneInfo(exchange_tz)
+                      rows = []
+                      for stamp, raw_close in zip(timestamps, closes):
+                          if raw_close is None:
+                              continue
+                          day = datetime.fromtimestamp(stamp, tz).strftime("%Y-%m-%d")
+                          rows.append((day, float(raw_close)))
+                      if not rows:
+                          raise RuntimeError("Yahoo chart API returned no valid closing prices")
+                      rows.sort(key=lambda item: item[0])
+                      latest = rows[-1][0]
+                      print(f"{name}: received {len(rows)} rows; latest={latest}; timezone={exchange_tz}", flush=True)
+                      return rows
                   except Exception as exc:
                       print(f"WARNING: {name} attempt {attempt} failed: {exc}", flush=True)
                       if attempt < max_attempts:
@@ -76,67 +96,56 @@ jobs:
               print(f"ERROR: giving up on {name}; existing data will be preserved", flush=True)
               return None
 
-          # First pass: each symbol is fetched independently.
           downloaded = {name: download_close(name, symbol) for name, symbol in symbols.items()}
 
-          # Use the newest date returned by any successfully downloaded symbol as a
-          # reference. Older series are retried independently, not used to fail the job.
           latest_dates = {
-              name: pd.Timestamp(close.index[-1]).strftime("%Y-%m-%d")
-              for name, close in downloaded.items() if close is not None
+              name: rows[-1][0]
+              for name, rows in downloaded.items() if rows is not None
           }
           reference_date = max(latest_dates.values()) if latest_dates else None
           if reference_date:
               print(f"Newest date returned by any Japanese series: {reference_date}", flush=True)
               for name, symbol in symbols.items():
-                  close = downloaded[name]
-                  if close is None:
+                  rows = downloaded[name]
+                  if rows is None or latest_dates[name] >= reference_date:
                       continue
-                  latest = latest_dates[name]
-                  if latest < reference_date:
+                  print(
+                      f"WARNING: {name} is behind ({latest_dates[name]} < {reference_date}); retrying this symbol",
+                      flush=True,
+                  )
+                  retry_rows = download_close(name, symbol)
+                  if retry_rows is not None and retry_rows[-1][0] >= reference_date:
+                      downloaded[name] = retry_rows
+                      latest_dates[name] = retry_rows[-1][0]
+                  else:
                       print(
-                          f"WARNING: {name} is behind ({latest} < {reference_date}); retrying this symbol",
+                          f"WARNING: {name} still behind; its existing data will be preserved",
                           flush=True,
                       )
-                      retry_close = download_close(name, symbol)
-                      if retry_close is not None:
-                          retry_latest = pd.Timestamp(retry_close.index[-1]).strftime("%Y-%m-%d")
-                          if retry_latest >= latest:
-                              downloaded[name] = retry_close
-                              latest_dates[name] = retry_latest
-                          if retry_latest < reference_date:
-                              print(
-                                  f"WARNING: {name} still behind at {retry_latest}; its existing data will be preserved",
-                                  flush=True,
-                              )
-                              downloaded[name] = None
-                      else:
-                          downloaded[name] = None
+                      downloaded[name] = None
 
           updates = {}
-          for name, close in downloaded.items():
-              if close is None:
+          for name, rows in downloaded.items():
+              if rows is None:
                   continue
-              rows = {}
+              output = {}
               previous = None
-              for ts, raw_value in close.items():
-                  value = float(raw_value)
+              for day, value in rows:
                   change = value - previous if previous is not None else None
                   pct = (change / previous * 100.0) if previous not in (None, 0) else None
-                  day = pd.Timestamp(ts).strftime("%Y-%m-%d")
-                  rows[day] = {
+                  output[day] = {
                       "close": round(value, 4),
                       "change": round(change, 4) if change is not None else None,
                       "pct": round(pct, 4) if pct is not None else None,
                   }
                   previous = value
-              updates[name] = rows
-              print(f"READY: {name}; latest={next(reversed(rows))}", flush=True)
+              updates[name] = output
+              print(f"READY: {name}; latest={next(reversed(output))}", flush=True)
 
           if not updates:
               raise RuntimeError("No Japanese index data could be refreshed; existing data preserved")
 
-          # Preserve US index data, market indicators, and any Japanese series that
+          # Preserve US index data, market indicators, and Japanese series that
           # could not be refreshed in this run.
           path = Path("data.json")
           payload = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
