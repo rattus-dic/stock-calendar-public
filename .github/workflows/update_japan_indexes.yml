@@ -32,6 +32,7 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          import time
           from datetime import datetime, timezone
           from pathlib import Path
 
@@ -44,23 +45,78 @@ jobs:
               # This is an ETN linked to Growth 250, not the index itself.
               "growth250": "2042.T",
           }
+          max_attempts = 3
+
+          def download_close(name, symbol):
+              """Try a symbol independently; never let one failure stop others."""
+              for attempt in range(1, max_attempts + 1):
+                  try:
+                      print(
+                          f"Downloading {name} ({symbol}), attempt {attempt}/{max_attempts}",
+                          flush=True,
+                      )
+                      hist = yf.Ticker(symbol).history(
+                          period="5y",
+                          interval="1d",
+                          auto_adjust=False,
+                          raise_errors=True,
+                      )
+                      if hist is None or hist.empty or "Close" not in hist:
+                          raise RuntimeError("No data received or Close column missing")
+                      close = hist["Close"].dropna()
+                      if close.empty:
+                          raise RuntimeError("No valid closing prices")
+                      latest = pd.Timestamp(close.index[-1]).strftime("%Y-%m-%d")
+                      print(f"{name}: received {len(close)} rows; latest={latest}", flush=True)
+                      return close
+                  except Exception as exc:
+                      print(f"WARNING: {name} attempt {attempt} failed: {exc}", flush=True)
+                      if attempt < max_attempts:
+                          time.sleep(5 * attempt)
+              print(f"ERROR: giving up on {name}; existing data will be preserved", flush=True)
+              return None
+
+          # First pass: each symbol is fetched independently.
+          downloaded = {name: download_close(name, symbol) for name, symbol in symbols.items()}
+
+          # Use the newest date returned by any successfully downloaded symbol as a
+          # reference. Older series are retried independently, not used to fail the job.
+          latest_dates = {
+              name: pd.Timestamp(close.index[-1]).strftime("%Y-%m-%d")
+              for name, close in downloaded.items() if close is not None
+          }
+          reference_date = max(latest_dates.values()) if latest_dates else None
+          if reference_date:
+              print(f"Newest date returned by any Japanese series: {reference_date}", flush=True)
+              for name, symbol in symbols.items():
+                  close = downloaded[name]
+                  if close is None:
+                      continue
+                  latest = latest_dates[name]
+                  if latest < reference_date:
+                      print(
+                          f"WARNING: {name} is behind ({latest} < {reference_date}); retrying this symbol",
+                          flush=True,
+                      )
+                      retry_close = download_close(name, symbol)
+                      if retry_close is not None:
+                          retry_latest = pd.Timestamp(retry_close.index[-1]).strftime("%Y-%m-%d")
+                          if retry_latest >= latest:
+                              downloaded[name] = retry_close
+                              latest_dates[name] = retry_latest
+                          if retry_latest < reference_date:
+                              print(
+                                  f"WARNING: {name} still behind at {retry_latest}; its existing data will be preserved",
+                                  flush=True,
+                              )
+                              downloaded[name] = None
+                      else:
+                          downloaded[name] = None
 
           updates = {}
-          for name, symbol in symbols.items():
-              print(f"Downloading {name}: {symbol}", flush=True)
-              hist = yf.Ticker(symbol).history(
-                  period="5y",
-                  interval="1d",
-                  auto_adjust=False,
-                  raise_errors=True,
-              )
-              if hist is None or hist.empty or "Close" not in hist:
-                  raise RuntimeError(f"No data received for {symbol}")
-
-              close = hist["Close"].dropna()
-              if close.empty:
-                  raise RuntimeError(f"No valid closing prices for {symbol}")
-
+          for name, close in downloaded.items():
+              if close is None:
+                  continue
               rows = {}
               previous = None
               for ts, raw_value in close.items():
@@ -74,20 +130,19 @@ jobs:
                       "pct": round(pct, 4) if pct is not None else None,
                   }
                   previous = value
-
               updates[name] = rows
-              print(
-                  f"{name}: {len(rows)} rows; latest={next(reversed(rows))}",
-                  flush=True,
-              )
+              print(f"READY: {name}; latest={next(reversed(rows))}", flush=True)
 
-          # Preserve US index data and all market indicators already in data.json.
+          if not updates:
+              raise RuntimeError("No Japanese index data could be refreshed; existing data preserved")
+
+          # Preserve US index data, market indicators, and any Japanese series that
+          # could not be refreshed in this run.
           path = Path("data.json")
           payload = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
           existing_data = payload.get("data")
           if not isinstance(existing_data, dict):
               existing_data = {}
-
           existing_data.update(updates)
           payload["data"] = existing_data
           payload["updatedAt"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -95,7 +150,7 @@ jobs:
               json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
               encoding="utf-8",
           )
-          print("Updated Japanese indexes in data.json", flush=True)
+          print(f"Updated Japanese indexes: {', '.join(sorted(updates))}; skipped: {', '.join(sorted(set(symbols) - set(updates)))}", flush=True)
           PY
 
       - name: Commit updated data
