@@ -47,7 +47,7 @@ select{flex:1;min-width:0}
 <div class="toolbar">
 <select id="index" aria-label="指数">
 <option value="nikkei">日経平均</option>
-<option value="topix">TOPIX</option>
+<option value="topix">TOPIX（ETN代替）</option>
 <option value="growth250">グロース250（ETN代替）</option>
 <option value="nasdaq">NASDAQ総合</option>
 </select>
@@ -104,7 +104,7 @@ let prices = {};
 let index = 'nikkei';
 
 const fmt = n => Math.abs(n).toLocaleString('ja-JP');
-const indexNames = { nikkei: '日経平均', topix: 'TOPIX', nasdaq: 'NASDAQ総合', growth250: 'グロース250（ETN代替）' };
+const indexNames = { nikkei: '日経平均', topix: 'TOPIX（ETN代替）', nasdaq: 'NASDAQ総合', growth250: 'グロース250（ETN代替）' };
 const indexUnits = { nikkei: '円', topix: 'pt', nasdaq: 'pt', growth250: '円' };
 
 // 日本市場・米国市場の主な休場日（2024〜2027年）
