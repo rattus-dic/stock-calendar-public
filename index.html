@@ -185,7 +185,6 @@ async function loadPrices() {
     $('status').textContent = `株価データ：接続済み（更新 ${json.updatedAt || '日時不明'}）`;
     render();
     renderIndicators();
-    renderIndicatorHistory();
   } catch (error) {
     prices = {};
     indicators = {};
@@ -193,7 +192,6 @@ async function loadPrices() {
     console.error(error);
     render();
     renderIndicators();
-    renderIndicatorHistory();
   }
 }
 
@@ -227,12 +225,12 @@ function normalizeHistory(json) {
     }
   } else if (source && typeof source === 'object') {
     for (const [date, values] of Object.entries(source)) {
-      if (/^\\d{4}-\\d{2}-\\d{2}$/.test(date) && values && typeof values === 'object') {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date) && values && typeof values === 'object') {
         result.push({ date, ...values });
       }
     }
   }
-  return result.filter(row => /^\\d{4}-\\d{2}-\\d{2}$/.test(row.date))
+  return result.filter(row => /^\d{4}-\d{2}-\d{2}$/.test(row.date))
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
