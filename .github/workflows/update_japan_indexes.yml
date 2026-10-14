@@ -1,4 +1,4 @@
-name: Update Japan Stock Indexes
+name: Update Japan Index Data
 
 on:
   workflow_dispatch:
@@ -8,13 +8,8 @@ on:
 permissions:
   contents: write
 
-# Prevent concurrent writes with the morning market-indicator workflow.
-concurrency:
-  group: stock-data-update
-  cancel-in-progress: false
-
 jobs:
-  update-japan:
+  update:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -25,151 +20,142 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install packages
-        run: pip install requests
+      - name: Install dependencies
+        run: pip install --upgrade yfinance pandas
 
-      - name: Download Japanese index data
+      - name: Update Japanese index data only
         run: |
           python - <<'PY'
           import json
-          import time
-          from datetime import datetime, timezone
+          from datetime import datetime, time, timezone
           from pathlib import Path
           from urllib.parse import quote
           from zoneinfo import ZoneInfo
-
           import requests
+          import yfinance as yf
 
           symbols = {
               "nikkei": "^N225",
               "topix": "1306.T",
-              # This is an ETN linked to Growth 250, not the index itself.
+              # グロース250連動ETN（指数そのものではない）
               "growth250": "2042.T",
           }
-          max_attempts = 3
-          session = requests.Session()
-          session.headers.update({"User-Agent": "Mozilla/5.0 (compatible; StockCalendar/1.0)"})
 
-          def download_close(name, symbol):
-              """Fetch daily closes directly from Yahoo Finance's chart endpoint."""
-              url = f"https://query1.finance.yahoo.com/v8/finance/chart/{quote(symbol, safe='')}"
-              for attempt in range(1, max_attempts + 1):
-                  try:
-                      print(
-                          f"Downloading {name} ({symbol}) via Yahoo chart API, attempt {attempt}/{max_attempts}",
-                          flush=True,
-                      )
-                      response = session.get(
-                          url,
-                          params={"range": "5y", "interval": "1d", "events": "history"},
-                          timeout=30,
-                      )
-                      response.raise_for_status()
-                      body = response.json().get("chart", {})
-                      if body.get("error"):
-                          raise RuntimeError(f"Yahoo chart API error: {body['error']}")
-                      results = body.get("result") or []
-                      if not results:
-                          raise RuntimeError("Yahoo chart API returned no result")
-                      result = results[0]
-                      timestamps = result.get("timestamp") or []
-                      quote_rows = (result.get("indicators", {}).get("quote") or [{}])[0]
-                      closes = quote_rows.get("close") or []
-                      exchange_tz = (result.get("meta") or {}).get("exchangeTimezoneName", "Asia/Tokyo")
-                      tz = ZoneInfo(exchange_tz)
-                      rows = []
-                      for stamp, raw_close in zip(timestamps, closes):
-                          if raw_close is None:
-                              continue
-                          day = datetime.fromtimestamp(stamp, tz).strftime("%Y-%m-%d")
-                          rows.append((day, float(raw_close)))
-                      if not rows:
-                          raise RuntimeError("Yahoo chart API returned no valid closing prices")
-                      rows.sort(key=lambda item: item[0])
-                      latest = rows[-1][0]
-                      print(f"{name}: received {len(rows)} rows; latest={latest}; timezone={exchange_tz}", flush=True)
-                      return rows
-                  except Exception as exc:
-                      print(f"WARNING: {name} attempt {attempt} failed: {exc}", flush=True)
-                      if attempt < max_attempts:
-                          time.sleep(5 * attempt)
-              print(f"ERROR: giving up on {name}; existing data will be preserved", flush=True)
-              return None
+          result = {}
+          for name, symbol in symbols.items():
+              df = yf.download(
+                  symbol,
+                  period="5y",
+                  interval="1d",
+                  auto_adjust=False,
+                  progress=False,
+              )
+              if df.empty or "Close" not in df:
+                  raise RuntimeError(f"No data received for {symbol}; refusing to publish partial update")
 
-          downloaded = {name: download_close(name, symbol) for name, symbol in symbols.items()}
+              close = df["Close"]
+              if getattr(close, "ndim", 1) > 1:
+                  close = close.iloc[:, 0]
+              close = close.dropna()
+              if close.empty:
+                  raise RuntimeError(f"No valid closing prices for {symbol}")
 
-          latest_dates = {
-              name: rows[-1][0]
-              for name, rows in downloaded.items() if rows is not None
-          }
-          reference_date = max(latest_dates.values()) if latest_dates else None
-          if reference_date:
-              print(f"Newest date returned by any Japanese series: {reference_date}", flush=True)
-              for name, symbol in symbols.items():
-                  rows = downloaded[name]
-                  if rows is None or latest_dates[name] >= reference_date:
-                      continue
-                  print(
-                      f"WARNING: {name} is behind ({latest_dates[name]} < {reference_date}); retrying this symbol",
-                      flush=True,
-                  )
-                  retry_rows = download_close(name, symbol)
-                  if retry_rows is not None and retry_rows[-1][0] >= reference_date:
-                      downloaded[name] = retry_rows
-                      latest_dates[name] = retry_rows[-1][0]
-                  else:
-                      print(
-                          f"WARNING: {name} still behind; its existing data will be preserved",
-                          flush=True,
-                      )
-                      downloaded[name] = None
-
-          updates = {}
-          for name, rows in downloaded.items():
-              if rows is None:
-                  continue
-              output = {}
+              records = {}
               previous = None
-              for day, value in rows:
-                  change = value - previous if previous is not None else None
-                  pct = (change / previous * 100.0) if previous not in (None, 0) else None
-                  output[day] = {
-                      "close": round(value, 4),
-                      "change": round(change, 4) if change is not None else None,
-                      "pct": round(pct, 4) if pct is not None else None,
+              for timestamp, raw_value in close.items():
+                  value = float(raw_value)
+                  change = round(value - previous, 2) if previous is not None else None
+                  pct = round((value / previous - 1) * 100, 2) if previous not in (None, 0) else None
+                  records[timestamp.strftime("%Y-%m-%d")] = {
+                      "close": round(value, 2),
+                      "change": change,
+                      "pct": pct,
                   }
                   previous = value
-              updates[name] = output
-              print(f"READY: {name}; latest={next(reversed(output))}", flush=True)
 
-          if not updates:
-              raise RuntimeError("No Japanese index data could be refreshed; existing data preserved")
+              # Yahoo chart history can lag the latest quote for ^N225 and 1306.T.
+              # If the daily series is behind, inspect Yahoo's quote timestamp and
+              # only append the quote when it is dated after the latest daily bar
+              # and the timestamp is at/after the Tokyo market close.
+              if name in ("nikkei", "topix"):
+                  try:
+                      url = f"https://query1.finance.yahoo.com/v8/finance/chart/{quote(symbol, safe='')}"
+                      response = requests.get(
+                          url,
+                          params={"range": "5d", "interval": "1d"},
+                          headers={"User-Agent": "Mozilla/5.0 (compatible; StockCalendar/1.0)"},
+                          timeout=20,
+                      )
+                      response.raise_for_status()
+                      chart = response.json().get("chart", {})
+                      if chart.get("error"):
+                          raise RuntimeError(chart["error"])
+                      quote_results = chart.get("result") or []
+                      if not quote_results:
+                          raise RuntimeError("Yahoo chart API returned no result")
+                      meta = quote_results[0].get("meta") or {}
+                      quote_price = meta.get("regularMarketPrice")
+                      quote_timestamp = meta.get("regularMarketTime")
+                      if quote_price is None or quote_timestamp is None:
+                          raise RuntimeError("Latest quote price or timestamp is missing")
 
-          # Preserve US index data, market indicators, and Japanese series that
-          # could not be refreshed in this run.
+                      tokyo = ZoneInfo("Asia/Tokyo")
+                      quote_dt = datetime.fromtimestamp(int(quote_timestamp), tokyo)
+                      latest_daily_date = datetime.strptime(next(reversed(records)), "%Y-%m-%d").date()
+                      quote_date = quote_dt.date()
+                      print(
+                          f"QUOTE CHECK {name}: price={float(quote_price):.2f}; "
+                          f"timestamp={quote_dt.isoformat()}; latest_daily={latest_daily_date}"
+                      )
+
+                      if quote_date > latest_daily_date and quote_dt.time().replace(tzinfo=None) >= time(15, 30):
+                          previous_close = records[next(reversed(records))]["close"]
+                          value = round(float(quote_price), 2)
+                          records[quote_date.isoformat()] = {
+                              "close": value,
+                              "change": round(value - previous_close, 2),
+                              "pct": round((value / previous_close - 1) * 100, 2) if previous_close else None,
+                          }
+                          print(
+                              f"FALLBACK ADDED {name}: {quote_date.isoformat()} close={value:.2f} "
+                              f"(quote timestamp is after Tokyo market close)"
+                          )
+                      elif quote_date > latest_daily_date:
+                          print(
+                              f"WARNING {name}: quote date is newer but timestamp is before market close; "
+                              "not adding an unconfirmed close"
+                          )
+                  except Exception as exc:
+                      print(f"WARNING {name}: latest-quote fallback unavailable: {type(exc).__name__}: {exc}")
+
+              result[name] = records
+              print(f"SUCCESS {name} ({symbol}): {len(records)} rows; latest={next(reversed(records))}")
+
           path = Path("data.json")
-          payload = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-          existing_data = payload.get("data")
-          if not isinstance(existing_data, dict):
-              existing_data = {}
-          existing_data.update(updates)
-          payload["data"] = existing_data
+          if path.exists():
+              payload = json.loads(path.read_text(encoding="utf-8"))
+          else:
+              payload = {}
+          old_data = payload.get("data", {})
+          if not isinstance(old_data, dict):
+              old_data = {}
+
+          # Replace only Japanese index series; preserve NASDAQ, SOX, and all other series.
+          old_data.update(result)
           payload["updatedAt"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-          path.write_text(
-              json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
-              encoding="utf-8",
-          )
-          print(f"Updated Japanese indexes: {', '.join(sorted(updates))}; skipped: {', '.join(sorted(set(symbols) - set(updates)))}", flush=True)
+          payload["data"] = old_data
+          path.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+          print("Updated Japanese indexes only; existing indicators and other series preserved.")
           PY
 
       - name: Commit updated data
         run: |
           if git diff --quiet -- data.json; then
-            echo "No Japanese index data changes."
+            echo "No stock data changes."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add data.json
-            git commit -m "Update Japanese stock indexes"
+            git commit -m "Update Japanese index data"
             git push origin HEAD:main
           fi
