@@ -36,7 +36,7 @@ select{flex:1;min-width:0}
 .big{font-size:28px;font-weight:800;margin:5px 0}
 .metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .metric{background:#303030;padding:12px;border-radius:10px}
-.metric strong{display:block;font-size:20px;margin-top:5px}.metric strong.indicator-value{font-size:23px}.positive{color:#91efb4}.negative{color:#ffaaaa}.neutral{color:var(--muted)}
+.metric strong{display:block;font-size:20px;margin-top:5px}.metric strong.indicator-value{font-size:23px}.indicator-value .metric-number{font-size:1em}.indicator-value .unit-small{font-size:11px;font-weight:700;white-space:nowrap;display:inline;vertical-align:baseline}.positive{color:#91efb4}.negative{color:#ffaaaa}.neutral{color:var(--muted)}
 .note{font-size:12px;line-height:1.7;color:var(--muted)}
 @media(max-width:430px){main{padding:9px}.day{min-height:76px;padding:4px 2px;gap:4px}.monthbar button{padding:8px 5px;font-size:12px}h1{font-size:19px}}
 </style>
@@ -293,7 +293,7 @@ function renderIndicatorHistory() {
   const max = Math.ceil((rawMax + rawSpan * 0.04) / tickStep) * tickStep;
   const firstTime = new Date(rows[0].date + 'T00:00:00Z').getTime();
   const lastTime = new Date(rows[rows.length - 1].date + 'T00:00:00Z').getTime();
-  const xForDate = date => left + (lastTime === firstTime ? 0 : (new Date(date + 'T00:00:00Z').getTime() - firstTime) / (lastTime-firstTime)) * (width-left-right);
+  const xForDate = date => { if (range === '7') { const i = plotted.findIndex(row => row.date === date); return left + (plotted.length <= 1 ? 0 : i * (width-left-right) / (plotted.length-1)); } return left + (lastTime === firstTime ? 0 : (new Date(date + 'T00:00:00Z').getTime() - firstTime) / (lastTime-firstTime)) * (width-left-right); };
   const y = value => top + (max-value) * (height-top-bottom) / (max-min || 1);
   const points = plotted.map(r => `${xForDate(r.date).toFixed(1)},${y(r.value).toFixed(1)}`).join(' ');
   const tickCount = Math.round((max-min)/tickStep);
