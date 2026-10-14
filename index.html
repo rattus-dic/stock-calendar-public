@@ -47,9 +47,10 @@ select{flex:1;min-width:0}
 <div class="toolbar">
 <select id="index" aria-label="指数">
 <option value="nikkei">日経平均</option>
-<option value="topix">TOPIX（ETN代替）</option>
-<option value="growth250">グロース250（ETN代替）</option>
+<option value="topix">TOPIX連動ETF</option>
+<option value="growth250">グロース250連動ETN</option>
 <option value="nasdaq">NASDAQ総合</option>
+<option value="sox">SOX（半導体株指数）</option>
 </select>
 <button id="refresh">更新</button>
 </div>
@@ -91,7 +92,16 @@ select{flex:1;min-width:0}
     </div>
   </div>
 </section>
-<p class="note">株価データは同じフォルダの data.json から読み込みます。グロース250は指数そのものではなく、連動ETN（2042.T）を代替データとして表示します。データファイルの更新後は「更新」ボタンを押してください。</p>
+<section class="panel" id="marketIndicators">
+  <h3 style="margin-top:0">マーケット指標</h3>
+  <p class="note">原油・日米10年国債利回り。取得元や更新タイミングにより、最新値の日付が異なる場合があります。</p>
+  <div class="metrics">
+    <div class="metric"><span class="muted">WTI原油先物（USD/バレル）</span><strong id="wtiValue">—</strong><span class="note" id="wtiDate">未取得</span></div>
+    <div class="metric"><span class="muted">米国10年国債利回り（%）</span><strong id="us10yValue">—</strong><span class="note" id="us10yDate">未取得</span></div>
+    <div class="metric"><span class="muted">日本10年国債利回り（%）</span><strong id="jp10yValue">—</strong><span class="note" id="jp10yDate">未取得</span></div>
+  </div>
+</section>
+<p class="note">株価データは同じフォルダの data.json から読み込みます。グロース250は指数そのものではなく、連動ETN（2042.T）を代替データとして表示します。TOPIXは指数そのものではなく、連動ETF（1306.T）を代替データとして表示します。データファイルの更新後は「更新」ボタンを押してください。</p>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -104,8 +114,9 @@ let prices = {};
 let index = 'nikkei';
 
 const fmt = n => Math.abs(n).toLocaleString('ja-JP');
-const indexNames = { nikkei: '日経平均', topix: 'TOPIX（ETN代替）', nasdaq: 'NASDAQ総合', growth250: 'グロース250（ETN代替）' };
-const indexUnits = { nikkei: '円', topix: 'pt', nasdaq: 'pt', growth250: '円' };
+const indexNames = { nikkei: '日経平均', topix: 'TOPIX連動ETF', nasdaq: 'NASDAQ総合', growth250: 'グロース250連動ETN', sox: 'SOX（半導体株指数）' };
+const indexUnits = { nikkei: '円', topix: '円', nasdaq: 'pt', growth250: '円', sox: 'pt' };
+let indicators = {};
 
 // 日本市場・米国市場の主な休場日（2024〜2027年）
 // 土日は曜日から判定。祝日・臨時休場の情報は必要に応じて更新する。
@@ -145,16 +156,38 @@ async function loadPrices() {
     if (!response.ok) throw new Error(`data.json の読み込みに失敗しました (${response.status})`);
     const json = await response.json();
     prices = json.data || {};
+    indicators = json.indicators || {};
     $('status').textContent = `株価データ：接続済み（更新 ${json.updatedAt || '日時不明'}）`;
     render();
+    renderIndicators();
   } catch (error) {
     prices = {};
+    indicators = {};
     $('status').textContent = '株価データ：読み込み失敗。サーバー経由で開いているか、data.jsonを確認してください。';
     console.error(error);
     render();
+    renderIndicators();
   }
 }
 
+
+
+function renderIndicators() {
+  const fmtValue = (value, digits=2) =>
+    value == null || !Number.isFinite(Number(value)) ? '—' :
+    Number(value).toLocaleString('ja-JP', { maximumFractionDigits: digits, minimumFractionDigits: digits });
+  const defs = [
+    ['wti', 'wtiValue', 'wtiDate', 2, 'USD/バレル'],
+    ['us10y', 'us10yValue', 'us10yDate', 3, '%'],
+    ['jp10y', 'jp10yValue', 'jp10yDate', 3, '%']
+  ];
+  for (const [key, valueId, dateId, digits, unit] of defs) {
+    const item = indicators[key] || {};
+    const latest = item.latest;
+    $(valueId).textContent = latest ? `${fmtValue(latest.value, digits)} ${unit}` : '取得できません';
+    $(dateId).textContent = latest ? `基準日：${latest.date || '不明'}${item.source ? '（財務省）' : ''}` : 'データ未取得';
+  }
+}
 
 function sortedPriceEntries(market) {
   return Object.entries(prices[market] || {})
@@ -196,7 +229,7 @@ function renderPerformance() {
   const [y, m] = chosenDate.split('-').map(Number);
   const monthBase = entries.filter(([date]) => date < `${y}-${String(m).padStart(2,'0')}-01`).slice(-1)[0] || null;
   const yearBase = entries.filter(([date]) => date < `${y}-01-01`).slice(-1)[0] || null;
-  $('performanceDate').textContent = `選択日までの最新データ：${chosenDate}（${fmtNum(chosenValue.close)}${index === 'nasdaq' ? '' : '円'}）`;
+  $('performanceDate').textContent = `選択日までの最新データ：${chosenDate}（${fmtNum(chosenValue.close)}${(['nasdaq','sox'].includes(index) ? 'pt' : '円')}）`;
   $('monthLabel').innerHTML = monthBase ? `月初来<br>（${fmtDate(monthBase[0])}比）` : '月初来<br>（前月末比）';
   $('yearLabel').innerHTML = yearBase ? `年初来<br>（${fmtDate(yearBase[0])}比）` : '年初来<br>（前年末比）';
   show('month', monthBase);
