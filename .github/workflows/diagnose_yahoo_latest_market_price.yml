@@ -1,0 +1,118 @@
+name: Diagnose Yahoo Latest Market Price
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip requests
+
+      - name: Check latest quote timestamps and daily bars
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timezone
+          from urllib.parse import quote
+          from zoneinfo import ZoneInfo
+          import requests
+
+          SYMBOLS = {
+              "nikkei": "^N225",
+              "topix_etf": "1306.T",
+              "growth250_etn": "2042.T",
+          }
+          session = requests.Session()
+          session.headers.update({
+              "User-Agent": "Mozilla/5.0 (compatible; StockCalendarDiagnostics/1.0)",
+              "Accept": "application/json",
+          })
+          now_utc = datetime.now(timezone.utc)
+          print(f"Diagnostic run UTC: {now_utc.isoformat()}")
+          print("This workflow only reports data. It does not change data.json.")
+
+          for label, symbol in SYMBOLS.items():
+              print(f"\n===== {label}: {symbol} =====")
+              url = f"https://query1.finance.yahoo.com/v8/finance/chart/{quote(symbol, safe='')}"
+              params = {"range": "10d", "interval": "1d"}
+              try:
+                  response = session.get(url, params=params, timeout=25)
+                  print(f"chart HTTP={response.status_code}")
+                  response.raise_for_status()
+                  chart = response.json().get("chart", {})
+                  if chart.get("error"):
+                      print(f"chart API error: {chart['error']}")
+                      continue
+                  result_list = chart.get("result") or []
+                  if not result_list:
+                      print("No chart result")
+                      continue
+                  result = result_list[0]
+                  meta = result.get("meta") or {}
+                  tz_name = meta.get("exchangeTimezoneName") or "Asia/Tokyo"
+                  try:
+                      tz = ZoneInfo(tz_name)
+                  except Exception:
+                      tz = ZoneInfo("Asia/Tokyo")
+
+                  print(f"meta.symbol={meta.get('symbol')}")
+                  print(f"exchangeTimezoneName={tz_name}")
+                  print(f"exchangeTimezoneShortName={meta.get('exchangeTimezoneShortName')}")
+                  print(f"instrumentType={meta.get('instrumentType')}")
+                  print(f"marketState={meta.get('marketState')}")
+                  print(f"regularMarketTime={meta.get('regularMarketTime')}")
+                  if meta.get("regularMarketTime"):
+                      ts = int(meta["regularMarketTime"])
+                      print(f"regularMarketTime_local={datetime.fromtimestamp(ts, tz).isoformat()}")
+                      print(f"regularMarketTime_utc={datetime.fromtimestamp(ts, timezone.utc).isoformat()}")
+                  print(f"regularMarketPrice={meta.get('regularMarketPrice')}")
+                  print(f"previousClose={meta.get('chartPreviousClose')}")
+                  print(f"currentTradingPeriod={meta.get('currentTradingPeriod')}")
+
+                  timestamps = result.get("timestamp") or []
+                  quote_list = ((result.get("indicators") or {}).get("quote") or [{}])
+                  q = quote_list[0] if quote_list else {}
+                  closes = q.get("close") or []
+                  opens = q.get("open") or []
+                  highs = q.get("high") or []
+                  lows = q.get("low") or []
+                  volumes = q.get("volume") or []
+                  rows = []
+                  for i, stamp in enumerate(timestamps):
+                      if i < len(closes) and closes[i] is not None:
+                          rows.append({
+                              "date": datetime.fromtimestamp(stamp, tz).date().isoformat(),
+                              "open": opens[i] if i < len(opens) else None,
+                              "high": highs[i] if i < len(highs) else None,
+                              "low": lows[i] if i < len(lows) else None,
+                              "close": closes[i],
+                              "volume": volumes[i] if i < len(volumes) else None,
+                          })
+                  print(f"daily_rows={len(rows)}")
+                  print(f"last_daily_rows={rows[-6:]}")
+                  if rows:
+                      last_day = rows[-1]["date"]
+                      quote_day = (
+                          datetime.fromtimestamp(int(meta["regularMarketTime"]), tz).date().isoformat()
+                          if meta.get("regularMarketTime") else None
+                      )
+                      print(f"last_daily_date={last_day}")
+                      print(f"regularMarketTime_date={quote_day}")
+                      if quote_day and quote_day > last_day:
+                          print("ASSESSMENT: quote timestamp is later than last daily bar; do not assume regularMarketPrice is a confirmed close.")
+                      elif quote_day == last_day:
+                          print("ASSESSMENT: quote timestamp and last daily bar share a date; compare values before any update.")
+                      else:
+                          print("ASSESSMENT: timestamp alone does not justify creating a new daily row.")
+              except Exception as exc:
+                  print(f"REQUEST_ERROR: {type(exc).__name__}: {exc}")
+          PY
