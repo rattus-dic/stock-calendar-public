@@ -94,7 +94,7 @@ select{flex:1;min-width:0}
 </section>
 <section class="panel" id="marketIndicators">
   <h3 style="margin-top:0">マーケット指標</h3>
-  <p class="note">原油・日米10年国債利回り。取得元や更新タイミングにより、最新値の日付が異なる場合があります。</p>
+  
   <div class="metrics">
     <div class="metric"><span class="muted">日本10年国債利回り（%）</span><strong id="jp10yValue">—</strong><span class="note" id="jp10yDate">未取得</span></div>
     <div class="metric"><span class="muted">米国10年国債利回り（%）</span><strong id="us10yValue">—</strong><span class="note" id="us10yDate">未取得</span></div>
@@ -130,7 +130,7 @@ select{flex:1;min-width:0}
     </table>
   </div>
 </section>
-<p class="note">データは日本時間の19時ごろに1日1回、自動更新されます（処理の遅延などにより時刻が前後する場合があります）。株価データは日足の終値を表示します。日本市場のデータは当日の終値、米国市場の指数データは時差の関係で原則として前日の終値です。日本10年国債利回りは財務省が公表するデータ（公表時刻は9時30分）を参照します。米国10年国債利回り、WTI原油価格、北海ブレント原油価格は、19時ごろの更新処理で取得した直近の日足データを表示するため、必ずしも19時ちょうどの市場価格を示すものではありません。</p>
+<p class="note">株価データは日足の終値を表示します。日本の株価指数は日本時間の17時ごろ、米国の株価指数・日米10年国債利回り・原油価格は10時ごろに、それぞれ1日1回自動更新されます（処理の遅延などにより時刻が前後する場合があります）。日本の株価指数は原則として当日の終値、米国の株価指数は時差の関係で原則として前日の終値を表示します。日本10年国債利回りは財務省が公表するデータを参照します（公表時刻は日本時間の9時30分）。米国10年国債利回り、WTI原油価格、北海ブレント原油価格は、更新処理で取得した直近の日足データを表示するため、更新時刻時点の市場価格とは異なる場合があります。</p>
 </main>
 <script>
 const $ = id => document.getElementById(id);
