@@ -32,7 +32,9 @@ jobs:
 
           symbols = {
               "nikkei": "^N225",
+              "topix": "998405.T",
               "nasdaq": "^IXIC"
+              "growth250": "2042.T",
           }
 
           result = {}
