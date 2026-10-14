@@ -21,7 +21,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install packages
-        run: pip install yfinance pandas
+        run: pip install yfinance pandas requests
 
       - name: Download stock data
         run: |
@@ -34,6 +34,7 @@ jobs:
               "nikkei": "^N225",
               "topix": "1306.T",
               "nasdaq": "^IXIC",
+              "sox": "^SOX",
               # グロース250連動ETN
               "growth250": "2042.T",
           }
@@ -77,9 +78,101 @@ jobs:
               result[name] = records
               print(f"{name}: {len(records)} records")
 
+          # 市場環境パネル用：WTI原油先物、米国10年国債利回り
+          indicators = {}
+          indicator_symbols = {
+              "wti": "CL=F",
+              "us10y": "^TNX",
+          }
+
+          for name, symbol in indicator_symbols.items():
+              df = yf.download(
+                  symbol,
+                  period="1mo",
+                  interval="1d",
+                  auto_adjust=False,
+                  progress=False
+              )
+              if df.empty:
+                  print(f"WARNING: no data received for indicator {symbol}")
+                  indicators[name] = {"latest": None, "previous": None}
+                  continue
+
+              close = df["Close"]
+              if getattr(close, "ndim", 1) > 1:
+                  close = close.iloc[:, 0]
+              close = close.dropna()
+              if close.empty:
+                  indicators[name] = {"latest": None, "previous": None}
+                  continue
+
+              indicators[name] = {
+                  "latest": {
+                      "date": close.index[-1].strftime("%Y-%m-%d"),
+                      "value": round(float(close.iloc[-1]), 4)
+                  },
+                  "previous": ({
+                      "date": close.index[-2].strftime("%Y-%m-%d"),
+                      "value": round(float(close.iloc[-2]), 4)
+                  } if len(close) > 1 else None)
+              }
+
+          # 財務省公式CSVから日本10年国債利回りを取得。
+          # CSVは基準日と年限別の列を持つ形式を想定。列名・文字コードの揺れに対応する。
+          import pandas as pd
+          import requests
+          from io import BytesIO
+
+          mof_url = "https://www.mof.go.jp/jgbs/reference/interest_rate/jgbcm.csv"
+          japan10y = {"latest": None, "previous": None, "source": mof_url}
+          try:
+              response = requests.get(mof_url, timeout=30)
+              response.raise_for_status()
+              mof_df = None
+              for encoding in ("cp932", "utf-8-sig", "shift_jis"):
+                  try:
+                      candidate = pd.read_csv(BytesIO(response.content), encoding=encoding)
+                      if not candidate.empty:
+                          mof_df = candidate
+                          break
+                  except Exception:
+                      pass
+
+              if mof_df is not None:
+                  ten_year_cols = [c for c in mof_df.columns if "10年" in str(c) or str(c).strip() == "10"]
+                  date_cols = [c for c in mof_df.columns if any(word in str(c) for word in ("基準日", "年月日", "日付", "date", "Date"))]
+                  if ten_year_cols:
+                      col = ten_year_cols[0]
+                      row = mof_df.iloc[0]
+                      raw_value = str(row[col]).replace("%", "").replace(",", "").strip()
+                      try:
+                          value = float(raw_value)
+                          raw_date = str(row[date_cols[0]]).strip() if date_cols else ""
+                          parsed_date = None
+                          for fmt in ("%Y/%m/%d", "%Y-%m-%d", "%Y年%m月%d日"):
+                              try:
+                                  parsed_date = datetime.strptime(raw_date[:10], fmt).strftime("%Y-%m-%d")
+                                  break
+                              except Exception:
+                                  pass
+                          japan10y["latest"] = {
+                              "date": parsed_date or "財務省CSVの基準日を確認してください",
+                              "value": round(value, 4)
+                          }
+                      except Exception as parse_error:
+                          print(f"WARNING: unable to parse MOF 10Y value: {parse_error}")
+                  print("MOF CSV columns:", [str(c) for c in mof_df.columns])
+              else:
+                  print("WARNING: unable to parse MOF CSV")
+          except Exception as e:
+              print(f"WARNING: unable to fetch Japan 10Y yield from MOF: {e}")
+
+          indicators["jp10y"] = japan10y
+
           output = {
               "updatedAt": datetime.now(timezone.utc).isoformat(),
-              "data": result
+              "data": result,
+              "indicators": indicators
           }
 
           with open("data.json", "w", encoding="utf-8") as f:
