@@ -123,78 +123,94 @@ jobs:
                   } if len(close) > 1 else None)
               }
 
-          # 財務省公式CSVから日本10年国債利回りを取得。
-          # CSVのタイトル行を飛ばし、基準日が和暦形式のデータ行だけを使う。
+          # 財務省公式の全期間CSVで日本10年債の日次履歴をバックフィルし、
+          # 最新CSVで直近値を更新する。
           import pandas as pd
           import requests
           from io import BytesIO
 
-          mof_url = "https://www.mof.go.jp/jgbs/reference/interest_rate/jgbcm.csv"
-          japan10y = {"latest": None, "previous": None, "source": mof_url}
+          historical_mof_url = "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/historical/jgbcme_all.csv"
+          latest_mof_url = "https://www.mof.go.jp/jgbs/reference/interest_rate/jgbcm.csv"
+          japan10y = {"latest": None, "previous": None, "source": latest_mof_url, "history_source": historical_mof_url}
+          parsed_jp_rows = []
+
           try:
-              response = requests.get(mof_url, timeout=30)
+              # 全期間CSVは1行目がタイトル、2行目が英語ヘッダー。
+              response = requests.get(historical_mof_url, timeout=45)
               response.raise_for_status()
-              mof_df = None
+              hist_df = pd.read_csv(BytesIO(response.content), encoding="utf-8-sig", header=1)
+              hist_df.columns = [str(c).strip() for c in hist_df.columns]
+              if "Date" not in hist_df.columns or "10Y" not in hist_df.columns:
+                  raise ValueError(f"Unexpected historical MOF columns: {list(hist_df.columns)}")
+
+              hist_dates = pd.to_datetime(hist_df["Date"], errors="coerce")
+              hist_values = pd.to_numeric(hist_df["10Y"].replace("-", pd.NA), errors="coerce")
+              valid_hist = hist_df.loc[hist_dates.notna() & hist_values.notna()].copy()
+              valid_hist["_date"] = hist_dates[hist_dates.notna() & hist_values.notna()].dt.strftime("%Y-%m-%d")
+              valid_hist["_value"] = hist_values[hist_dates.notna() & hist_values.notna()]
+
+              for _, row in valid_hist.iterrows():
+                  day = str(row["_date"])
+                  value = float(row["_value"])
+                  parsed_jp_rows.append((day, value))
+                  daily_indicator_history.setdefault(day, {})["jp10y"] = round(value, 4)
+              print(f"Japan 10Y historical rows: {len(parsed_jp_rows)}")
+          except Exception as hist_error:
+              print(f"WARNING: unable to backfill Japan 10Y history: {hist_error}")
+
+          # 最新CSVは和暦の日付なので、過去データを補完したうえで最新値を更新する。
+          try:
+              response = requests.get(latest_mof_url, timeout=30)
+              response.raise_for_status()
+              latest_df = None
               for encoding in ("cp932", "utf-8-sig", "shift_jis"):
                   try:
-                      candidate = pd.read_csv(
-                          BytesIO(response.content), encoding=encoding, header=1
-                      )
+                      candidate = pd.read_csv(BytesIO(response.content), encoding=encoding, header=1)
                       if not candidate.empty:
-                          mof_df = candidate
+                          latest_df = candidate
                           break
                   except Exception:
                       pass
 
-              if mof_df is not None:
-                  ten_year_cols = [c for c in mof_df.columns if str(c).strip() == "10年"]
-                  date_cols = [c for c in mof_df.columns if str(c).strip() in ("基準日", "年月日", "日付", "date", "Date")]
-                  if ten_year_cols and date_cols:
-                      col = ten_year_cols[0]
-                      date_col = date_cols[0]
-                      date_text = mof_df[date_col].astype(str).str.strip()
-                      date_pattern = r"^(?:R\d+\.\d+\.\d+|\d{4}[./-]\d{1,2}[./-]\d{1,2}|\d{4}年\d{1,2}月\d{1,2}日)$"
-                      valid_rows = mof_df.loc[date_text.str.match(date_pattern, na=False)]
-
-                      parsed_rows = []
-                      for _, row in valid_rows.iterrows():
+              if latest_df is not None:
+                  latest_df.columns = [str(c).strip() for c in latest_df.columns]
+                  date_col = next((c for c in latest_df.columns if c in ("基準日", "年月日", "日付", "Date", "date")), None)
+                  value_col = next((c for c in latest_df.columns if c == "10年"), None)
+                  if date_col and value_col:
+                      for _, row in latest_df.iterrows():
+                          raw_date = str(row[date_col]).strip()
+                          if not raw_date.startswith(("R", "H", "S")):
+                              continue
                           try:
-                              raw_date = str(row[date_col]).strip()
-                              if raw_date.startswith("R"):
-                                  parts = raw_date[1:].split(".")
-                                  year = 2018 + int(parts[0])
-                                  month = int(parts[1])
-                                  day_num = int(parts[2])
-                                  parsed_date = datetime(year, month, day_num)
-                              elif "年" in raw_date:
-                                  parsed_date = datetime.strptime(raw_date, "%Y年%m月%d日")
-                              else:
-                                  normalized_date = raw_date.replace("/", "-").replace(".", "-")
-                                  parsed_date = datetime.strptime(normalized_date, "%Y-%m-%d")
-                              iso_date = parsed_date.strftime("%Y-%m-%d")
-                              raw_value = str(row[col]).replace("%", "").replace(",", "").strip()
+                              era, rest = raw_date[0], raw_date[1:]
+                              parts = [int(x) for x in rest.split(".")]
+                              base_year = {"R": 2018, "H": 1988, "S": 1925}[era]
+                              parsed_date = datetime(base_year + parts[0], parts[1], parts[2]).strftime("%Y-%m-%d")
+                              raw_value = str(row[value_col]).replace("%", "").replace(",", "").strip()
                               value = float(raw_value)
-                              parsed_rows.append((iso_date, value))
-                              daily_indicator_history.setdefault(iso_date, {})["jp10y"] = round(value, 4)
-                          except Exception as row_error:
-                              print(f"WARNING: skipping MOF row: {row_error}")
+                              parsed_jp_rows.append((parsed_date, value))
+                              daily_indicator_history.setdefault(parsed_date, {})["jp10y"] = round(value, 4)
+                          except Exception:
+                              continue
+          except Exception as latest_error:
+              print(f"WARNING: unable to refresh latest Japan 10Y yield: {latest_error}")
 
-                      parsed_rows.sort(key=lambda item: item[0])
-                      if parsed_rows:
-                          latest_date, latest_value = parsed_rows[-1]
-                          previous = ({"date": parsed_rows[-2][0], "value": round(parsed_rows[-2][1], 4)}
-                                      if len(parsed_rows) > 1 else None)
-                          japan10y["latest"] = {"date": latest_date, "value": round(latest_value, 4)}
-                          japan10y["previous"] = previous
-                          print("Japan 10Y latest:", japan10y["latest"])
-                      else:
-                          print("WARNING: no valid dated rows found in MOF CSV")
-                  else:
-                      print("WARNING: MOF date or 10Y column not found; columns:", [str(c) for c in mof_df.columns])
-              else:
-                  print("WARNING: unable to parse MOF CSV")
-          except Exception as e:
-              print(f"WARNING: unable to fetch Japan 10Y yield from MOF: {e}")
+          # 日付ごとに重複を除き、最新値と前営業日値を設定。
+          jp_by_date = {}
+          for day, value in parsed_jp_rows:
+              jp_by_date[day] = value
+          for day, values in daily_indicator_history.items():
+              if "jp10y" in values:
+                  jp_by_date[day] = values["jp10y"]
+          sorted_jp = sorted(jp_by_date.items())
+          if sorted_jp:
+              latest_date, latest_value = sorted_jp[-1]
+              japan10y["latest"] = {"date": latest_date, "value": round(latest_value, 4)}
+              japan10y["previous"] = ({"date": sorted_jp[-2][0], "value": round(sorted_jp[-2][1], 4)} if len(sorted_jp) > 1 else None)
+              print(f"Japan 10Y history rows: {len(sorted_jp)}")
+              print("Japan 10Y latest:", japan10y["latest"])
+          else:
+              print("WARNING: no valid Japan 10Y historical rows found")
 
           indicators["jp10y"] = japan10y
 
