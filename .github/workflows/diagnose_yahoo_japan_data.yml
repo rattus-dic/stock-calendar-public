@@ -15,6 +15,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip requests
+
       - name: Compare Yahoo chart endpoints and date parameters
         run: |
           python - <<'PY'
@@ -63,7 +66,10 @@ jobs:
                   result = results[0]
                   meta = result.get("meta") or {}
                   tz_name = meta.get("exchangeTimezoneName", "Asia/Tokyo")
-                  tz = ZoneInfo(tz_name)
+                  try:
+                      tz = ZoneInfo(tz_name)
+                  except Exception:
+                      tz = ZoneInfo("Asia/Tokyo")
                   timestamps = result.get("timestamp") or []
                   closes = ((result.get("indicators") or {}).get("quote") or [{}])[0].get("close") or []
                   rows = []
