@@ -144,7 +144,7 @@ jobs:
                   date_cols = [c for c in mof_df.columns if any(word in str(c) for word in ("基準日", "年月日", "日付", "date", "Date"))]
                   if ten_year_cols:
                       col = ten_year_cols[0]
-                      row = mof_df.iloc[0]
+                      row = mof_df.iloc[-1]
                       raw_value = str(row[col]).replace("%", "").replace(",", "").strip()
                       try:
                           value = float(raw_value)
@@ -156,6 +156,15 @@ jobs:
                                   break
                               except Exception:
                                   pass
+                          if parsed_date is None and raw_date.startswith("R"):
+                             try:
+                                 parts = raw_date[1:].split(".")
+                                 year = 2018 + int(parts[0])
+                                 month = int(parts[1])
+                                 day = int(parts[2])
+                                 parsed_date = datetime(year, month, day).strftime("%Y-%m-%d")
+                             except Exception:
+                                 pass
                           japan10y["latest"] = {
                               "date": parsed_date or "財務省CSVの基準日を確認してください",
                               "value": round(value, 4)
