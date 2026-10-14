@@ -77,14 +77,14 @@ select{flex:1;min-width:0}
   <p class="note" id="performanceDate">比較対象を計算中…</p>
   <div class="metrics">
     <div class="metric">
-      <span class="muted" id="monthLabel">月初来（前月末比）</span>
-      <strong id="monthChange">—</strong>
-      <span class="note" id="monthChangeValue">—</span>
+      <span class="muted" id="monthLabel">月初来<br>（前月末比）</span>
+      <strong id="monthChangeValue">—</strong>
+      <span class="note" id="monthBaseValue">（基準 —）</span>
     </div>
     <div class="metric">
-      <span class="muted" id="yearLabel">年初来（前年末比）</span>
-      <strong id="yearChange">—</strong>
-      <span class="note" id="yearChangeValue">—</span>
+      <span class="muted" id="yearLabel">年初来<br>（前年末比）</span>
+      <strong id="yearChangeValue">—</strong>
+      <span class="note" id="yearBaseValue">（基準 —）</span>
     </div>
   </div>
 </section>
@@ -125,37 +125,44 @@ function sortedPriceEntries(market) {
     .filter(([date, v]) => /^\d{4}-\d{2}-\d{2}$/.test(date) && Number.isFinite(Number(v?.close)))
     .sort(([a],[b]) => a.localeCompare(b));
 }
+
 function renderPerformance() {
   const entries = sortedPriceEntries(index);
-  const latest = entries.length ? entries[entries.length - 1] : null;
+  const chosen = entries.filter(([date]) => date <= selected).slice(-1)[0] || null;
   const fmtDate = d => d ? `${Number(d.slice(5,7))}月${Number(d.slice(8,10))}日` : '—';
+  const fmtNum = n => Number(n).toLocaleString('ja-JP', {maximumFractionDigits:2});
   function show(prefix, baseEntry) {
-    const pctEl = $(prefix + 'Change');
     const valueEl = $(prefix + 'ChangeValue');
-    if (!latest || !baseEntry || Number(baseEntry[1].close) === 0) {
-      pctEl.textContent = '—';
-      pctEl.className = 'neutral';
-      valueEl.textContent = '比較できるデータがありません';
+    const baseEl = $(prefix + 'BaseValue');
+    if (!chosen || !baseEntry || Number(baseEntry[1].close) === 0) {
+      valueEl.textContent = '—';
+      valueEl.className = 'neutral';
+      baseEl.textContent = '（比較データなし）';
       return;
     }
-    const diff = Number(latest[1].close) - Number(baseEntry[1].close);
+    const diff = Number(chosen[1].close) - Number(baseEntry[1].close);
     const pct = diff / Number(baseEntry[1].close) * 100;
-    pctEl.textContent = `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
-    pctEl.className = pct > 0 ? 'positive' : pct < 0 ? 'negative' : 'neutral';
-    valueEl.textContent = `${diff > 0 ? '+' : diff < 0 ? '−' : '±'}${Math.abs(diff).toLocaleString('ja-JP', {maximumFractionDigits:2})}（基準 ${Number(baseEntry[1].close).toLocaleString('ja-JP', {maximumFractionDigits:2})}）`;
+    const sign = diff > 0 ? '+' : diff < 0 ? '−' : '±';
+    const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
+    valueEl.innerHTML = `${sign}${fmtNum(Math.abs(diff))} <span class="${pct > 0 ? 'positive' : pct < 0 ? 'negative' : 'neutral'}">（${pctText}）</span>`;
+    valueEl.className = diff > 0 ? 'positive' : diff < 0 ? 'negative' : 'neutral';
+    baseEl.textContent = `（基準 ${fmtNum(baseEntry[1].close)}）`;
   }
-  if (!latest) {
-    $('performanceDate').textContent = '株価データがありません。';
-    ['month','year'].forEach(k => { $(k+'Change').textContent='—'; $(k+'ChangeValue').textContent='—'; });
+  if (!chosen) {
+    $('performanceDate').textContent = '選択日以前の株価データがありません。';
+    ['month','year'].forEach(k => {
+      $(k+'ChangeValue').textContent='—';
+      $(k+'BaseValue').textContent='—';
+    });
     return;
   }
-  const [latestDate, latestValue] = latest;
-  const [y, m] = latestDate.split('-').map(Number);
+  const [chosenDate, chosenValue] = chosen;
+  const [y, m] = chosenDate.split('-').map(Number);
   const monthBase = entries.filter(([date]) => date < `${y}-${String(m).padStart(2,'0')}-01`).slice(-1)[0] || null;
   const yearBase = entries.filter(([date]) => date < `${y}-01-01`).slice(-1)[0] || null;
-  $('performanceDate').textContent = `最新データ：${latestDate}（${Number(latestValue.close).toLocaleString('ja-JP', {maximumFractionDigits:2})}${index === 'nasdaq' ? '' : '円'}）`;
-  $('monthLabel').textContent = monthBase ? `月初来（${fmtDate(monthBase[0])}比）` : '月初来（前月末比）';
-  $('yearLabel').textContent = yearBase ? `年初来（${fmtDate(yearBase[0])}比）` : '年初来（前年末比）';
+  $('performanceDate').textContent = `選択日までの最新データ：${chosenDate}（${fmtNum(chosenValue.close)}${index === 'nasdaq' ? '' : '円'}）`;
+  $('monthLabel').innerHTML = monthBase ? `月初来<br>（${fmtDate(monthBase[0])}比）` : '月初来<br>（前月末比）';
+  $('yearLabel').innerHTML = yearBase ? `年初来<br>（${fmtDate(yearBase[0])}比）` : '年初来<br>（前年末比）';
   show('month', monthBase);
   show('year', yearBase);
 }
