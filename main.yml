@@ -21,70 +21,86 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install yfinance pandas
+        run: pip install --upgrade yfinance pandas
 
-      - name: Download index data
+      - name: Download index data with retries and diagnostics
         run: |
           python - <<'PY'
           import json
+          import time
           from datetime import datetime, timezone
           from pathlib import Path
           import pandas as pd
           import yfinance as yf
 
-          # 2042.T is an ETN linked to the TSE Growth Market 250 Index,
-          # not the index value itself. It is used as a practical proxy because
-          # a reliable public Yahoo Finance ticker for the index itself was not verified.
           symbols = {
               "nikkei": "^N225",
               "topix": "998405.T",
               "nasdaq": "^IXIC",
+              # This is an ETN linked to the Growth Market 250 Index, not the index itself.
               "growth250": "2042.T",
           }
-          result = {}
-          for key, symbol in symbols.items():
-              try:
-                  hist = yf.download(symbol, period="5y", interval="1d", auto_adjust=False, progress=False)
-                  if hist.empty:
-                      print(f"WARNING: no data returned for {key} ({symbol})")
-                      result[key] = {}
-                      continue
-                  close_col = hist["Close"]
-                  if isinstance(close_col, pd.DataFrame):
-                      close_col = close_col.iloc[:, 0]
-                  close_col = close_col.dropna()
-                  rows = {}
-                  previous = None
-                  for ts, close in close_col.items():
-                      value = float(close)
-                      change = value - previous if previous is not None else 0.0
-                      pct = (change / previous * 100.0) if previous not in (None, 0) else 0.0
-                      rows[pd.Timestamp(ts).strftime("%Y-%m-%d")] = {
-                          "close": round(value, 4),
-                          "change": round(change, 4),
-                          "pct": round(pct, 4),
-                      }
-                      previous = value
-                  result[key] = rows
-                  print(f"{key} ({symbol}): {len(rows)} rows")
-              except Exception as exc:
-                  print(f"WARNING: failed to download {key} ({symbol}): {exc}")
-                  result[key] = {}
 
-          # Do not overwrite a previously populated series with an empty result.
+          result = {}
+          failures = []
+          for key, symbol in symbols.items():
+              rows = {}
+              last_error = None
+              for attempt in range(1, 4):
+                  try:
+                      print(f"\n=== {key}: {symbol}, attempt {attempt}/3 ===", flush=True)
+                      hist = yf.Ticker(symbol).history(period="5y", interval="1d", auto_adjust=False, raise_errors=True)
+                      if hist is None or hist.empty or "Close" not in hist:
+                          raise RuntimeError("Yahoo Finance returned an empty history")
+                      close_col = hist["Close"].dropna()
+                      previous = None
+                      for ts, close in close_col.items():
+                          value = float(close)
+                          change = value - previous if previous is not None else 0.0
+                          pct = change / previous * 100.0 if previous not in (None, 0) else 0.0
+                          rows[pd.Timestamp(ts).strftime("%Y-%m-%d")] = {
+                              "close": round(value, 4),
+                              "change": round(change, 4),
+                              "pct": round(pct, 4),
+                          }
+                          previous = value
+                      if not rows:
+                          raise RuntimeError("History contained no valid closing prices")
+                      print(f"SUCCESS {key} ({symbol}): {len(rows)} rows; latest={next(reversed(rows))} close={rows[next(reversed(rows))]['close']}", flush=True)
+                      break
+                  except Exception as exc:
+                      last_error = repr(exc)
+                      print(f"FAILED attempt {attempt} for {key} ({symbol}): {last_error}", flush=True)
+                      if attempt < 3:
+                          time.sleep(4 * attempt)
+              if rows:
+                  result[key] = rows
+              else:
+                  failures.append(f"{key} ({symbol}): {last_error}")
+
+          # Do not publish a new data.json if either newly added index failed.
+          required = ["topix", "growth250"]
+          missing_required = [key for key in required if not result.get(key)]
+          if missing_required:
+              print("\nERROR: Newly added series failed: " + "; ".join(failures), flush=True)
+              raise SystemExit(1)
+
           path = Path("data.json")
           old = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"data": {}}
           old_data = old.get("data", {})
           for key, rows in result.items():
+              # Replace only with a non-empty result; keep previous data if an optional series fails.
               if rows:
                   old_data[key] = rows
-              else:
-                  old_data.setdefault(key, {})
+
           payload = {
               "updatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
               "data": old_data,
           }
           path.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+          print("\nUpdated data.json series:", ", ".join(f"{k}={len(v)} rows" for k, v in old_data.items()), flush=True)
+          if failures:
+              print("WARNING: optional series not refreshed: " + "; ".join(failures), flush=True)
           PY
 
       - name: Commit updated data
