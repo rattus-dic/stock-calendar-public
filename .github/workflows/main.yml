@@ -153,17 +153,25 @@ jobs:
                       col = ten_year_cols[0]
                       date_col = date_cols[0]
                       date_text = mof_df[date_col].astype(str).str.strip()
-                      valid_rows = mof_df.loc[date_text.str.match(r"^R\d+\.\d+\.\d+$", na=False)]
+                      date_pattern = r"^(?:R\d+\.\d+\.\d+|\d{4}[./-]\d{1,2}[./-]\d{1,2}|\d{4}年\d{1,2}月\d{1,2}日)$"
+                      valid_rows = mof_df.loc[date_text.str.match(date_pattern, na=False)]
 
                       parsed_rows = []
                       for _, row in valid_rows.iterrows():
                           try:
                               raw_date = str(row[date_col]).strip()
-                              parts = raw_date[1:].split(".")
-                              year = 2018 + int(parts[0])
-                              month = int(parts[1])
-                              day_num = int(parts[2])
-                              iso_date = datetime(year, month, day_num).strftime("%Y-%m-%d")
+                              if raw_date.startswith("R"):
+                                  parts = raw_date[1:].split(".")
+                                  year = 2018 + int(parts[0])
+                                  month = int(parts[1])
+                                  day_num = int(parts[2])
+                                  parsed_date = datetime(year, month, day_num)
+                              elif "年" in raw_date:
+                                  parsed_date = datetime.strptime(raw_date, "%Y年%m月%d日")
+                              else:
+                                  normalized_date = raw_date.replace("/", "-").replace(".", "-")
+                                  parsed_date = datetime.strptime(normalized_date, "%Y-%m-%d")
+                              iso_date = parsed_date.strftime("%Y-%m-%d")
                               raw_value = str(row[col]).replace("%", "").replace(",", "").strip()
                               value = float(raw_value)
                               parsed_rows.append((iso_date, value))
