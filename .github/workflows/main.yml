@@ -149,6 +149,8 @@ jobs:
                       try:
                           value = float(raw_value)
                           raw_date = str(row[date_cols[0]]).strip() if date_cols else ""
+                          print("DEBUG raw_date:", repr(raw_date))
+                          print("DEBUG date_cols:", date_cols)
                           parsed_date = None
                           for fmt in ("%Y/%m/%d", "%Y-%m-%d", "%Y年%m月%d日"):
                               try:
