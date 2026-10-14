@@ -48,6 +48,7 @@ select{flex:1;min-width:0}
 <select id="index" aria-label="指数">
 <option value="nikkei">日経平均</option>
 <option value="topix">TOPIX</option>
+<option value="growth250">グロース250（ETN代替）</option>
 <option value="nasdaq">NASDAQ総合</option>
 </select>
 <button id="refresh">更新</button>
@@ -90,7 +91,7 @@ select{flex:1;min-width:0}
     </div>
   </div>
 </section>
-<p class="note">株価データは同じフォルダの data.json から読み込みます。データファイルの更新後は「更新」ボタンを押してください。</p>
+<p class="note">株価データは同じフォルダの data.json から読み込みます。グロース250は指数そのものではなく、連動ETN（2042.T）を代替データとして表示します。データファイルの更新後は「更新」ボタンを押してください。</p>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -103,6 +104,8 @@ let prices = {};
 let index = 'nikkei';
 
 const fmt = n => Math.abs(n).toLocaleString('ja-JP');
+const indexNames = { nikkei: '日経平均', topix: 'TOPIX', nasdaq: 'NASDAQ総合', growth250: 'グロース250（ETN代替）' };
+const indexUnits = { nikkei: '円', topix: 'pt', nasdaq: 'pt', growth250: '円' };
 
 // 日本市場・米国市場の主な休場日（2024〜2027年）
 // 土日は曜日から判定。祝日・臨時休場の情報は必要に応じて更新する。
@@ -248,7 +251,7 @@ function render() {
   $('detail').innerHTML =
     `<div class="muted">${p[0]}年${p[1]}月${p[2]}日（${weekdays[dt.getDay()]}）</div>` +
     (v
-      ? `<div class="big">${fmt(v.close)}${index === 'nasdaq' ? '' : '円'}</div><div class="${v.change >= 0 ? 'uptext' : 'downtext'}">${v.change > 0 ? '▲' : v.change < 0 ? '▼' : '—'} ${v.change > 0 ? '+' : v.change < 0 ? '−' : ''}${fmt(v.change)}　${v.pct > 0 ? '+' : ''}${Number(v.pct).toFixed(2)}%</div>`
+      ? `<div class="big">${fmt(v.close)}${indexUnits[index] || 'pt'}</div><div class="${v.change >= 0 ? 'uptext' : 'downtext'}">${v.change > 0 ? '▲' : v.change < 0 ? '▼' : '—'} ${v.change > 0 ? '+' : v.change < 0 ? '−' : ''}${fmt(v.change)}　${v.pct > 0 ? '+' : ''}${Number(v.pct).toFixed(2)}%</div>`
       : marketStatus(selected, index) === 'holiday'
         ? '<div class="big" style="color:#a9d9ff">休場日</div><div class="note">この市場はこの日に取引を行っていません。</div>'
         : '<div class="big">データ未取得</div><div class="note">取引日と考えられますが、株価データがありません。</div>');
