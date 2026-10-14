@@ -142,37 +142,40 @@ jobs:
               if mof_df is not None:
                   ten_year_cols = [c for c in mof_df.columns if "10年" in str(c) or str(c).strip() == "10"]
                   date_cols = [c for c in mof_df.columns if any(word in str(c) for word in ("基準日", "年月日", "日付", "date", "Date"))]
-                  if ten_year_cols:
+
+                  if ten_year_cols and date_cols:
                       col = ten_year_cols[0]
-                      row = mof_df.iloc[-1]
-                      raw_value = str(row[col]).replace("%", "").replace(",", "").strip()
-                      try:
-                          value = float(raw_value)
-                          raw_date = str(row[date_cols[0]]).strip() if date_cols else ""
-                          print("DEBUG raw_date:", repr(raw_date))
-                          print("DEBUG date_cols:", date_cols)
-                          parsed_date = None
-                          for fmt in ("%Y/%m/%d", "%Y-%m-%d", "%Y年%m月%d日"):
-                              try:
-                                  parsed_date = datetime.strptime(raw_date[:10], fmt).strftime("%Y-%m-%d")
-                                  break
-                              except Exception:
-                                  pass
-                          if parsed_date is None and raw_date.startswith("R"):
-                             try:
-                                 parts = raw_date[1:].split(".")
-                                 year = 2018 + int(parts[0])
-                                 month = int(parts[1])
-                                 day = int(parts[2])
-                                 parsed_date = datetime(year, month, day).strftime("%Y-%m-%d")
-                             except Exception:
-                                 pass
-                          japan10y["latest"] = {
-                              "date": parsed_date or "財務省CSVの基準日を確認してください",
-                              "value": round(value, 4)
-                          }
-                      except Exception as parse_error:
-                          print(f"WARNING: unable to parse MOF 10Y value: {parse_error}")
+                      date_col = date_cols[0]
+
+                      # CSV末尾の注意書きなどを除き、R8.10.13形式の日付行だけを使う
+                      date_text = mof_df[date_col].astype(str).str.strip()
+                      valid_mask = date_text.str.match(r"^R\d+\.\d+\.\d+$", na=False)
+                      valid_rows = mof_df.loc[valid_mask]
+
+                      if not valid_rows.empty:
+                          row = valid_rows.iloc[-1]
+                          raw_date = str(row[date_col]).strip()
+                          raw_value = str(row[col]).replace("%", "").replace(",", "").strip()
+
+                          try:
+                              parts = raw_date[1:].split(".")
+                              year = 2018 + int(parts[0])
+                              month = int(parts[1])
+                              day = int(parts[2])
+                              parsed_date = datetime(year, month, day).strftime("%Y-%m-%d")
+                              value = float(raw_value)
+
+                              japan10y["latest"] = {
+                                  "date": parsed_date,
+                                  "value": round(value, 4)
+                              }
+                              print("Japan 10Y latest:", japan10y["latest"])
+                          except Exception as parse_error:
+                              print(f"WARNING: unable to parse MOF 10Y value: {parse_error}")
+                      else:
+                          print("WARNING: no valid dated rows found in MOF CSV")
+                  else:
+                      print("WARNING: MOF 10Y column or date column not found")
                   print("MOF CSV columns:", [str(c) for c in mof_df.columns])
               else:
                   print("WARNING: unable to parse MOF CSV")
