@@ -107,72 +107,81 @@ jobs:
               }
 
           # Japan 10-year government bond yield: MOF CSVs.
+          # If the MOF source is temporarily unavailable, continue updating the
+          # US indexes, oil, and US 10Y; preserve the existing jp10y value.
           historical_url = "https://www.mof.go.jp/english/policy/jgbs/reference/interest_rate/historical/jgbcme_all.csv"
           latest_url = "https://www.mof.go.jp/jgbs/reference/interest_rate/jgbcm.csv"
           jp_rows = []
 
-          response = requests.get(historical_url, timeout=45)
-          response.raise_for_status()
-          frame = pd.read_csv(BytesIO(response.content), encoding="utf-8-sig", header=1)
-          frame.columns = [str(c).strip() for c in frame.columns]
-          if "Date" not in frame.columns or "10Y" not in frame.columns:
-              raise ValueError(f"Unexpected historical MOF columns: {list(frame.columns)}")
-          dates = pd.to_datetime(frame["Date"], errors="coerce")
-          values = pd.to_numeric(frame["10Y"].replace("-", pd.NA), errors="coerce")
-          valid = dates.notna() & values.notna()
-          for date, value in zip(dates[valid], values[valid]):
-              day = date.strftime("%Y-%m-%d")
-              val = float(value)
-              jp_rows.append((day, val))
-              daily_history.setdefault(day, {})["jp10y"] = round(val, 4)
+          try:
+              response = requests.get(historical_url, timeout=45)
+              response.raise_for_status()
+              frame = pd.read_csv(BytesIO(response.content), encoding="utf-8-sig", header=1)
+              frame.columns = [str(c).strip() for c in frame.columns]
+              if "Date" not in frame.columns or "10Y" not in frame.columns:
+                  raise ValueError(f"Unexpected historical MOF columns: {list(frame.columns)}")
+              dates = pd.to_datetime(frame["Date"], errors="coerce")
+              values = pd.to_numeric(frame["10Y"].replace("-", pd.NA), errors="coerce")
+              valid = dates.notna() & values.notna()
+              for date, value in zip(dates[valid], values[valid]):
+                  day = date.strftime("%Y-%m-%d")
+                  val = float(value)
+                  jp_rows.append((day, val))
+                  daily_history.setdefault(day, {})["jp10y"] = round(val, 4)
+          except Exception as exc:
+              print(f"WARNING: historical Japan 10Y data unavailable: {exc}", flush=True)
 
-          response = requests.get(latest_url, timeout=30)
-          response.raise_for_status()
-          latest_frame = None
-          for encoding in ("cp932", "utf-8-sig", "shift_jis"):
-              try:
-                  candidate = pd.read_csv(BytesIO(response.content), encoding=encoding, header=1)
-                  if not candidate.empty:
-                      latest_frame = candidate
-                      break
-              except Exception:
-                  pass
+          try:
+              response = requests.get(latest_url, timeout=30)
+              response.raise_for_status()
+              latest_frame = None
+              for encoding in ("cp932", "utf-8-sig", "shift_jis"):
+                  try:
+                      candidate = pd.read_csv(BytesIO(response.content), encoding=encoding, header=1)
+                      if not candidate.empty:
+                          latest_frame = candidate
+                          break
+                  except Exception:
+                      pass
 
-          if latest_frame is not None:
-              latest_frame.columns = [str(c).strip() for c in latest_frame.columns]
-              date_col = next((c for c in latest_frame.columns if c in ("基準日", "年月日", "日付", "Date", "date")), None)
-              value_col = "10年" if "10年" in latest_frame.columns else None
-              if date_col and value_col:
-                  for _, row in latest_frame.iterrows():
-                      raw_date = str(row[date_col]).strip()
-                      if not raw_date.startswith(("R", "H", "S")):
-                          continue
-                      try:
-                          era, rest = raw_date[0], raw_date[1:]
-                          year, month, day_num = [int(x) for x in rest.split(".")]
-                          year = {"R": 2018, "H": 1988, "S": 1925}[era] + year
-                          day = datetime(year, month, day_num).strftime("%Y-%m-%d")
-                          val = float(str(row[value_col]).replace("%", "").replace(",", "").strip())
-                          jp_rows.append((day, val))
-                          daily_history.setdefault(day, {})["jp10y"] = round(val, 4)
-                      except Exception:
-                          continue
+              if latest_frame is not None:
+                  latest_frame.columns = [str(c).strip() for c in latest_frame.columns]
+                  date_col = next((c for c in latest_frame.columns if c in ("基準日", "年月日", "日付", "Date", "date")), None)
+                  value_col = "10年" if "10年" in latest_frame.columns else None
+                  if date_col and value_col:
+                      for _, row in latest_frame.iterrows():
+                          raw_date = str(row[date_col]).strip()
+                          if not raw_date.startswith(("R", "H", "S")):
+                              continue
+                          try:
+                              era, rest = raw_date[0], raw_date[1:]
+                              year, month, day_num = [int(x) for x in rest.split(".")]
+                              year = {"R": 2018, "H": 1988, "S": 1925}[era] + year
+                              day = datetime(year, month, day_num).strftime("%Y-%m-%d")
+                              val = float(str(row[value_col]).replace("%", "").replace(",", "").strip())
+                              jp_rows.append((day, val))
+                              daily_history.setdefault(day, {})["jp10y"] = round(val, 4)
+                          except Exception:
+                              continue
+          except Exception as exc:
+              print(f"WARNING: latest Japan 10Y data unavailable: {exc}", flush=True)
 
           jp_by_date = {}
           for day, value in jp_rows:
               jp_by_date[day] = value
-          if not jp_by_date:
-              raise RuntimeError("No valid Japan 10Y yield data found; refusing to publish partial update")
-
-          ordered_jp = sorted(jp_by_date.items())
-          indicator_updates["jp10y"] = {
-              "latest": {"date": ordered_jp[-1][0], "value": round(ordered_jp[-1][1], 4)},
-              "previous": ({
-                  "date": ordered_jp[-2][0], "value": round(ordered_jp[-2][1], 4)
-              } if len(ordered_jp) > 1 else None),
-              "source": latest_url,
-              "history_source": historical_url,
-          }
+          if jp_by_date:
+              ordered_jp = sorted(jp_by_date.items())
+              indicator_updates["jp10y"] = {
+                  "latest": {"date": ordered_jp[-1][0], "value": round(ordered_jp[-1][1], 4)},
+                  "previous": ({
+                      "date": ordered_jp[-2][0], "value": round(ordered_jp[-2][1], 4)
+                  } if len(ordered_jp) > 1 else None),
+                  "source": latest_url,
+                  "history_source": historical_url,
+              }
+              print(f"jp10y: latest={indicator_updates['jp10y']['latest']}", flush=True)
+          else:
+              print("WARNING: no valid Japan 10Y data; keeping existing value if present", flush=True)
 
           # Merge updates into existing files instead of rebuilding them, so the
           # Japanese index series and unrelated keys remain untouched.
