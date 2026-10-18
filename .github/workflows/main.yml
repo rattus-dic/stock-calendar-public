@@ -3,7 +3,7 @@ name: Update US Markets and Bond Yields
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 1 * * 1-5" # 10:00 JST, Monday-Friday
+    - cron: "0 1 * * 1-6" # 10:00 JST, Monday-Saturday
 
 permissions:
   contents: write
