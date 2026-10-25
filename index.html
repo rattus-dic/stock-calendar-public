@@ -70,7 +70,6 @@ select{flex:1;min-width:0}
       <div class="event-list" id="earningsEvents"><p class="note">読み込み中…</p></div>
     </div>
   </div>
-  <p class="note" style="margin-bottom:0">予定は変更される場合があります。発表日時・情報源を確認し、未確認情報は「未確認」と表示します。</p>
 </section>
 
 <div class="toolbar">
@@ -219,7 +218,7 @@ function renderEventList(targetId, rows, emptyText) {
       : escapeHtml(row.sourceName || '情報源未登録');
     const detail = [row.detail, `情報源：${source}`].filter(Boolean).join(' · ');
     return `<article class="event-item">
-      <div class="event-top"><span class="event-date">${eventDateLabel(row.date, row.timeJst || row.time, row.market)}</span><span class="event-tag">${escapeHtml(status)}</span></div>
+      <div class="event-top"><span class="event-date">${eventDateLabel(row.date, row.timeJst || row.time, row.market)}</span>${isEconomic ? `<span class="event-tag">${escapeHtml(status)}</span>` : ""}</div>
       <div class="event-title">${escapeHtml(row.name || '名称未登録')}</div>
       <div class="event-meta">${detail}</div>
     </article>`;
@@ -242,7 +241,7 @@ async function loadEvents() {
     const payload = await response.json();
     renderEventList('economicEvents', payload.economicEvents, '重要イベントはまだ登録されていません。');
     renderEventList('earningsEvents', payload.earnings, '決算予定はまだ登録されていません。保有・注目銘柄の登録後に優先表示します。');
-    status.textContent = `イベント情報：更新 ${payload.updatedAt || '日時不明'} · 出典・確定状況は各項目を確認`;
+    status.textContent = `イベント情報：更新 ${payload.updatedAt || '日時不明'}`;
   } catch (error) {
     renderEventList('economicEvents', [], 'events.json を読み込めません。');
     renderEventList('earningsEvents', [], 'events.json を読み込めません。');
