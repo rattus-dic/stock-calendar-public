@@ -58,7 +58,7 @@ select{flex:1;min-width:0}
 <header><h1>📈 株価カレンダー</h1><span class="muted">β版</span></header>
 
 <section class="panel" id="eventsPanel" aria-labelledby="eventsHeading" style="margin-bottom:18px">
-  <h2 id="eventsHeading" style="font-size:19px;margin:0 0 6px">🗓️ 重要イベント・日米決算</h2>
+  <h2 id="eventsHeading" style="font-size:19px;margin:0 0 6px">🗓️ 重要イベント・決算</h2>
   <p class="note" id="eventsUpdated">イベント情報を読み込み中…</p>
   <div class="event-grid">
     <div>
@@ -242,11 +242,11 @@ async function loadEvents() {
     renderEventList('economicEvents', payload.economicEvents, '重要イベントはまだ登録されていません。');
     renderEventList('earningsEvents', payload.earnings, '決算予定はまだ登録されていません。保有・注目銘柄の登録後に優先表示します。');
     const updatedAt = String(payload.updatedAt || '日時不明').replace(/\s*（公式スケジュール部分確認）/g, '');
-    status.textContent = `イベント情報：更新 ${updatedAt}`;
+    status.textContent = `イベント・決算情報：更新 ${updatedAt}`;
   } catch (error) {
     renderEventList('economicEvents', [], 'events.json を読み込めません。');
     renderEventList('earningsEvents', [], 'events.json を読み込めません。');
-    status.textContent = 'イベント情報：読み込み失敗。公開先に events.json があるか確認してください。';
+    status.textContent = 'イベント・決算情報：読み込み失敗。公開先に events.json があるか確認してください。';
     console.error(error);
   }
 }
