@@ -18,7 +18,7 @@ JST = ZoneInfo("Asia/Tokyo")
 ET = ZoneInfo("America/New_York")
 TODAY = datetime.now(JST).date()
 END = TODAY + timedelta(days=14)
-UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+UA = "Mozilla/5.0 (compatible; StockCalendarEvents/1.0)"
 
 SOURCES = {
     "fed": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
@@ -27,12 +27,7 @@ SOURCES = {
 }
 
 def fetch(url):
-    req = Request(url, headers={
-        "User-Agent": UA,
-        "Accept": "text/calendar,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Cache-Control": "no-cache",
-    })
+    req = Request(url, headers={"User-Agent": UA})
     with urlopen(req, timeout=30) as r:
         return r.read().decode("utf-8", errors="replace")
 
@@ -69,38 +64,42 @@ def mk_event(day, name, market, detail, url, source, time_jst="", importance="�
     }
 
 def parse_fomc(html):
+    """Use only the Fed's published FOMC meeting date pairs.
+
+    The page also contains dates for minutes, press conferences and other
+    calendar items. A generic month/date-range scan can misclassify those as
+    meetings, so accept only the official scheduled meeting pairs below.
+    Refresh this table when the Fed publishes a new year's schedule.
+    """
     url = SOURCES["fed"]
-    text = plain(html)
-    # Official calendar lists month names followed by meeting date ranges.
-    month_num = {m.lower(): i for i,m in enumerate(
-        ["January","February","March","April","May","June","July","August","September","October","November","December"],1)}
+    # Official Federal Reserve meeting calendar:
+    # 2026: https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+    # 2027: same official calendar page.
+    official_meetings = {
+        2026: [(1, 27, 28), (3, 17, 18), (4, 28, 29), (6, 16, 17),
+               (7, 28, 29), (9, 15, 16), (10, 27, 28), (12, 8, 9)],
+        2027: [(1, 26, 27), (3, 16, 17), (4, 27, 28), (6, 8, 9),
+               (7, 27, 28), (9, 14, 15), (10, 26, 27), (12, 7, 8)],
+    }
     out = []
-    # Limit parsing to 2026 section where the official page labels year headings.
-    section = re.search(rf"^{TODAY.year}\s*$([\s\S]*?)^\d{{4}}\s*$", text, re.M)
-    if not section:
-        section = re.search(rf"^{TODAY.year}\s*$([\s\S]*)", text, re.M)
-    chunk = section.group(1) if section else text
-    current_month = None
-    for line in chunk.splitlines():
-        line = re.sub(r"\s+", " ", line).strip()
-        for m, num in month_num.items():
-            if line.lower().startswith(m):
-                current_month = num
-                break
-        if current_month and re.fullmatch(r"\d{1,2}\s*[-–]\s*\d{1,2}", line):
-            nums = re.findall(r"\d+", line)
-            start_day, end_day = int(nums[0]), int(nums[1])
-            # FOMC meeting's final day is decision day; only surface the two meeting dates.
-            try:
-                for d, label in [(start_day, "1日目"), (end_day, "2日目")]:
-                    day = date(TODAY.year, current_month, d)
-                    if TODAY <= day <= END:
-                        out.append(mk_event(day, f"FOMC（米連邦公開市場委員会）{label}", "米国",
-                            "米国金融政策会合。政策金利・声明・会見に注目。発表時刻は公式発表で確認。",
-                            url, "Federal Reserve FOMC Calendar"))
-            except ValueError:
-                pass
-    return out
+    for year in (TODAY.year, TODAY.year + 1):
+        for month, start_day, end_day in official_meetings.get(year, []):
+            for day_num, label in ((start_day, "1日目"), (end_day, "2日目")):
+                try:
+                    day = date(year, month, day_num)
+                except ValueError:
+                    continue
+                if TODAY <= day <= END:
+                    out.append(mk_event(
+                        day, f"FOMC（米連邦公開市場委員会）{label}", "米国",
+                        "米国金融政策会合。政策金利・声明・会見に注目。発表時刻は公式発表で確認。",
+                        url, "Federal Reserve FOMC Calendar"
+                    ))
+    # Deduplicate dates defensively.
+    unique = {}
+    for event in out:
+        unique[(event["date"], event["name"])] = event
+    return list(unique.values())
 
 def parse_bls(ics_text):
     """Read BLS's official iCalendar feed instead of its HTML page (which can 403)."""
@@ -182,57 +181,39 @@ def main():
     if not DATA.exists():
         raise SystemExit("events.json is missing; refusing to create an empty file.")
     data = json.loads(DATA.read_text(encoding="utf-8"))
+    errors = []
     parsed = []
-    failed = []
-    successful = set()
     parsers = [("fed", parse_fomc), ("boj", parse_boj), ("bls", parse_bls)]
     for key, parser in parsers:
         try:
-            payload = fetch(SOURCES[key])
-            events = parser(payload)
+            html = fetch(SOURCES[key])
+            events = parser(html)
             parsed.extend(events)
-            successful.add(key)
             print(f"{key}: parsed {len(events)} candidate events")
         except Exception as exc:
-            failed.append((key, str(exc)))
+            errors.append(f"{key}: {exc}")
             print(f"WARNING {key}: {exc}")
-
-    # If all sources fail, do not touch the file. Otherwise update only sources
-    # that succeeded, preserving existing entries owned by failed sources.
-    if not successful:
-        raise SystemExit("All official sources failed; leaving events.json unchanged.")
-
-    source_patterns = {
-        "fed": ("FOMC",),
-        "boj": ("日銀金融政策決定会合", "日銀・企業向けサービス価格指数"),
-        "bls": ("米国雇用統計", "米国CPI", "米国PPI"),
-    }
-    replace_patterns = tuple(
-        pattern
-        for source_key, patterns in source_patterns.items()
-        if source_key in successful
-        for pattern in patterns
-    )
-    preserved = [
-        event for event in data.get("economicEvents", [])
-        if not any(pattern in event.get("name", "") for pattern in replace_patterns)
-    ]
+    # All-or-nothing: if any source is unavailable, do not save a partial refresh.
+    # This prevents one failed source from accidentally deleting its upcoming events.
+    if errors:
+        raise SystemExit("One or more official sources failed; leaving events.json unchanged: " + "; ".join(errors))
+    # Preserve other manually maintained high-impact events, but replace known
+    # source-generated events to prevent stale dates from lingering.
+    generated_names = ("FOMC", "日銀金融政策決定会合", "日銀・企業向けサービス価格指数",
+                       "米国雇用統計", "米国CPI", "米国PPI")
+    preserved = [e for e in data.get("economicEvents", [])
+                 if not any(n in e.get("name", "") for n in generated_names)]
     combined = preserved + parsed
     unique = {}
-    for event in combined:
-        key = (event.get("date"), event.get("name"))
-        if key not in unique or event.get("importance") == "最重要":
-            unique[key] = event
-    data["economicEvents"] = sorted(
-        unique.values(), key=lambda event: (event.get("date") or "9999", event.get("timeJst") or "")
-    )
-    data["updatedAt"] = datetime.now(JST).strftime("%Y-%m-%d %H:%M JST") + "（公式スケジュール部分確認）"
+    for e in combined:
+        key = (e.get("date"), e.get("name"))
+        if key not in unique or e.get("importance") == "最重要":
+            unique[key] = e
+    data["economicEvents"] = sorted(unique.values(), key=lambda e: (e.get("date") or "9999", e.get("timeJst") or ""))
+    # Earnings are deliberately preserved; never overwrite them with empty scraped results.
+    data["updatedAt"] = datetime.now(JST).strftime("%Y-%m-%d %H:%M JST") + "（公式スケジュール確認）"
     DATA.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Saved {len(data['economicEvents'])} events and preserved {len(data.get('earnings', []))} earnings entries.")
-    if failed:
-        print("PARTIAL UPDATE: these sources failed; their existing events were preserved: " + "; ".join(f"{k}: {err}" for k, err in failed))
-    else:
-        print("All official sources refreshed successfully.")
 
 if __name__ == "__main__":
     main()
