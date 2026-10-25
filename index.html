@@ -191,8 +191,13 @@ function renderEventList(targetId, rows, emptyText) {
     return;
   }
   const todayKey = key(new Date().getFullYear(), new Date().getMonth()+1, new Date().getDate());
-  const visible = rows.filter(row => !row.date || row.date >= todayKey)
-    .sort((a,b) => String(a.date || '9999').localeCompare(String(b.date || '9999')));
+  const end = new Date(); end.setDate(end.getDate() + 14);
+  const endKey = key(end.getFullYear(), end.getMonth()+1, end.getDate());
+  const isEconomic = targetId.toLowerCase().includes('event');
+  const visible = rows.filter(row => {
+    if (!row.date) return !isEconomic;
+    return row.date >= todayKey && (!isEconomic || row.date <= endKey);
+  }).sort((a,b) => String(a.date || '9999').localeCompare(String(b.date || '9999')));
   if (!visible.length) {
     target.innerHTML = `<p class="note">今後の予定は登録されていません。</p>`;
     controls.innerHTML = '';
@@ -205,7 +210,7 @@ function renderEventList(targetId, rows, emptyText) {
   const initial = [...dated.slice(0, 5), ...(!dated.length ? undated.slice(0, 2) : [])];
   const shown = expanded ? visible : initial;
   target.innerHTML = shown.map(row => {
-    const status = row.confirmed === false ? '日程未確認' : (row.status || '予定');
+    const status = row.confirmed === false ? '日程未確認' : (row.importance || row.status || '予定');
     const source = row.sourceUrl
       ? `<a href="${escapeHtml(row.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(row.sourceName || '情報源')}</a>`
       : escapeHtml(row.sourceName || '情報源未登録');
