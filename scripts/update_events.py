@@ -90,11 +90,23 @@ def parse_fomc(html):
                     day = date(year, month, day_num)
                 except ValueError:
                     continue
-                if TODAY <= day <= END:
+                if label == "2日目":
+                    # FOMC statements are normally released at 14:00 US Eastern Time.
+                    # Convert the actual release timestamp to JST, including DST.
+                    release_jst = datetime.combine(day, time(14, 0), ET).astimezone(JST)
+                    display_day = release_jst.date()
+                    display_time = release_jst.strftime("%H:%M")
+                    name = "FOMC政策金利・声明発表"
+                    detail = "声明発表は通常、米東部時間14:00。記者会見は通常14:30（日本時間は季節により変動）。公式発表で最終確認。"
+                else:
+                    display_day = day
+                    display_time = "時刻未定"
+                    name = "FOMC（米連邦公開市場委員会）1日目"
+                    detail = "米国金融政策会合の1日目。政策発表は通常2日目。"
+                if TODAY <= display_day <= END:
                     out.append(mk_event(
-                        day, f"FOMC（米連邦公開市場委員会）{label}", "米国",
-                        "米国金融政策会合。政策金利・声明・会見に注目。発表時刻は公式発表で確認。",
-                        url, "Federal Reserve FOMC Calendar"
+                        display_day, name, "米国", detail,
+                        url, "Federal Reserve FOMC Calendar", display_time
                     ))
     unique = {}
     for event in out:
@@ -120,20 +132,25 @@ def parse_bls(ics_text):
         raw = dm.group(2)
         try:
             if len(raw) == 8:
-                dt = datetime.strptime(raw, "%Y%m%d").replace(tzinfo=ET)
-            elif raw.endswith("Z"):
-                dt = datetime.strptime(raw, "%Y%m%dT%H%M%SZ").replace(tzinfo=ZoneInfo("UTC"))
+                # All-day event: keep the published date and don't invent a time.
+                event_day = datetime.strptime(raw, "%Y%m%d").date()
+                event_time = "時刻未定"
             else:
-                dt = datetime.strptime(raw, "%Y%m%dT%H%M%S").replace(tzinfo=ZoneInfo(dm.group(1) or "America/New_York"))
-            dt_jst = dt.astimezone(JST)
-            if not (TODAY <= dt_jst.date() <= END):
+                if raw.endswith("Z"):
+                    dt = datetime.strptime(raw, "%Y%m%dT%H%M%SZ").replace(tzinfo=ZoneInfo("UTC"))
+                else:
+                    dt = datetime.strptime(raw, "%Y%m%dT%H%M%S").replace(tzinfo=ZoneInfo(dm.group(1) or "America/New_York"))
+                dt_jst = dt.astimezone(JST)
+                event_day = dt_jst.date()
+                event_time = dt_jst.strftime("%H:%M")
+            if not (TODAY <= event_day <= END):
                 continue
             name = ("米国雇用統計" if "employment situation" in low
                     else "米国CPI（消費者物価指数）" if "consumer price index" in low
                     else "米国PPI（生産者物価指数）")
-            out.append(mk_event(dt_jst.date(), name, "米国",
+            out.append(mk_event(event_day, name, "米国",
                 f"{title}。米金利・ドル円・株式市場の反応に注目。",
-                url, "U.S. Bureau of Labor Statistics（公式iCalendar）", dt_jst.strftime("%H:%M")))
+                url, "U.S. Bureau of Labor Statistics（公式iCalendar）", event_time))
         except (ValueError, KeyError):
             continue
     return out
@@ -159,7 +176,7 @@ def parse_boj(html):
             if "statement on monetary policy" in low or "outlook for economic activity and prices" in low:
                 name = "日銀金融政策決定会合・展望レポート"
                 detail = "日銀の政策判断・経済物価見通しに注目。時刻は公式発表で確認。"
-                out.append(mk_event(day, name, "日本", detail, url, "日本銀行 公表予定"))
+                out.append(mk_event(day, name, "日本", detail, url, "日本銀行 公表予定", "時刻未定"))
             elif "services producer price index" in low:
                 out.append(mk_event(day, "日銀・企業向けサービス価格指数", "日本",
                     "サービス価格の動向。国内インフレ圧力を確認。", url, "日本銀行 公表予定", "08:50", "高"))
@@ -170,11 +187,11 @@ def parse_boj(html):
         if not any(e["date"] == "2026-10-29" and "金融政策決定会合" in e["name"] for e in out):
             out.append(mk_event(date(2026,10,29), "日銀金融政策決定会合（1日目）", "日本",
                 "金融政策・金利見通しに注目。", "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm",
-                "日本銀行 会合日程"))
+                "日本銀行 会合日程", "時刻未定"))
         if not any(e["date"] == "2026-10-30" and "金融政策決定会合" in e["name"] for e in out):
             out.append(mk_event(date(2026,10,30), "日銀金融政策決定会合・展望レポート", "日本",
                 "政策決定と物価・経済見通しを確認。発表時刻は未定。",
-                "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm", "日本銀行 会合日程"))
+                "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm", "日本銀行 会合日程", "時刻未定"))
     return out
 
 def main():
