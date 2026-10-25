@@ -23,7 +23,7 @@ UA = "Mozilla/5.0 (compatible; StockCalendarEvents/1.0)"
 SOURCES = {
     "fed": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
     "boj": "https://www.boj.or.jp/en/about/calendar/index.htm",
-    "bls": f"https://www.bls.gov/schedule/{TODAY.year}/",
+    "bls": "https://www.bls.gov/schedule/news_release/bls.ics",
 }
 
 def fetch(url):
@@ -31,10 +31,30 @@ def fetch(url):
     with urlopen(req, timeout=30) as r:
         return r.read().decode("utf-8", errors="replace")
 
+class TextLines(HTMLParser):
+    """Convert HTML to text while retaining table and heading boundaries."""
+    BLOCKS = {"br", "p", "div", "tr", "td", "th", "li", "h1", "h2", "h3", "h4", "h5", "h6"}
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts = []
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() in self.BLOCKS:
+            self.parts.append("\n")
+    def handle_endtag(self, tag):
+        if tag.lower() in self.BLOCKS:
+            self.parts.append("\n")
+    def handle_data(self, data):
+        self.parts.append(data)
+
 def plain(html):
-    html = re.sub(r"(?is)<script.*?</script>|<style.*?</style>", " ", html)
-    html = re.sub(r"(?i)<br\s*/?>|</t[dh]>|</tr>|</p>|</h[1-6]>", "\n", html)
-    return re.sub(r"(?s)<[^>]+>", " ", html).replace("&nbsp;", " ").replace("&#160;", " ")
+    parser = TextLines()
+    parser.feed(html)
+    lines = []
+    for line in "".join(parser.parts).replace("\xa0", " ").splitlines():
+        line = re.sub(r"\s+", " ", line).strip()
+        if line:
+            lines.append(line)
+    return "\n".join(lines)
 
 def mk_event(day, name, market, detail, url, source, time_jst="", importance="最重要"):
     return {
@@ -51,9 +71,9 @@ def parse_fomc(html):
         ["January","February","March","April","May","June","July","August","September","October","November","December"],1)}
     out = []
     # Limit parsing to 2026 section where the official page labels year headings.
-    section = re.search(r"2026(.*?)(?:2025|2027|$)", text, re.S)
+    section = re.search(rf"^{TODAY.year}\s*$([\s\S]*?)^\d{{4}}\s*$", text, re.M)
     if not section:
-        section = re.search(r"2026(.*)", text, re.S)
+        section = re.search(rf"^{TODAY.year}\s*$([\s\S]*)", text, re.M)
     chunk = section.group(1) if section else text
     current_month = None
     for line in chunk.splitlines():
@@ -77,39 +97,40 @@ def parse_fomc(html):
                 pass
     return out
 
-def parse_bls(html):
+def parse_bls(ics_text):
+    """Read BLS's official iCalendar feed instead of its HTML page (which can 403)."""
     url = SOURCES["bls"]
-    text = re.sub(r"\s+", " ", plain(html))
+    # Unfold RFC 5545 continuation lines before parsing VEVENT properties.
+    text = re.sub(r"\r?\n[ \t]", "", ics_text)
+    blocks = re.findall(r"BEGIN:VEVENT(.*?)END:VEVENT", text, re.S | re.I)
     out = []
-    # BLS page uses lines like: Friday, November 6, 2026 08:30 AM Employment Situation for October 2026
-    pattern = re.compile(
-        r"(Monday|Tuesday|Wednesday|Thursday|Friday),\s+"
-        r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+"
-        r"(\d{1,2}),\s+(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)\s+([^.;]+?)(?=(?:Monday|Tuesday|Wednesday|Thursday|Friday),\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)|$)"
-    )
-    months = {m.lower(): i for i,m in enumerate(
-        ["January","February","March","April","May","June","July","August","September","October","November","December"],1)}
-    for m in pattern.finditer(text):
+    for block in blocks:
+        sm = re.search(r"(?im)^SUMMARY(?:;[^:]*)?:(.*)$", block)
+        dm = re.search(r"(?im)^DTSTART(?:;TZID=([^:;]+))?(?:;[^:]*)?:(\d{8}(?:T\d{6}Z?)?)", block)
+        if not sm or not dm:
+            continue
+        title = sm.group(1).strip().replace(r"\,", ",").replace(r"\;", ";")
+        low = title.lower()
+        if not any(k in low for k in ["employment situation", "consumer price index", "producer price index"]):
+            continue
+        raw = dm.group(2)
         try:
-            mo, d, y = months[m.group(2).lower()], int(m.group(3)), int(m.group(4))
-            day = date(y, mo, d)
-            title = re.sub(r"\s+", " ", m.group(8)).strip()
-            if not (TODAY <= day <= END):
+            if len(raw) == 8:
+                dt = datetime.strptime(raw, "%Y%m%d").replace(tzinfo=ET)
+            elif raw.endswith("Z"):
+                dt = datetime.strptime(raw, "%Y%m%dT%H%M%SZ").replace(tzinfo=ZoneInfo("UTC"))
+            else:
+                dt = datetime.strptime(raw, "%Y%m%dT%H%M%S").replace(tzinfo=ZoneInfo(dm.group(1) or "America/New_York"))
+            dt_jst = dt.astimezone(JST)
+            if not (TODAY <= dt_jst.date() <= END):
                 continue
-            if not any(k in title.lower() for k in ["employment situation", "consumer price index", "producer price index"]):
-                continue
-            hh, mm, ap = int(m.group(5)), int(m.group(6)), m.group(7)
-            if ap == "PM" and hh != 12: hh += 12
-            if ap == "AM" and hh == 12: hh = 0
-            dt = datetime.combine(day, time(hh, mm), ET).astimezone(JST)
-            jday = dt.date()
-            label = ("米国雇用統計" if "employment situation" in title.lower()
-                     else "米国CPI（消費者物価指数）" if "consumer price index" in title.lower()
-                     else "米国PPI（生産者物価指数）")
-            out.append(mk_event(jday, label, "米国",
+            name = ("米国雇用統計" if "employment situation" in low
+                    else "米国CPI（消費者物価指数）" if "consumer price index" in low
+                    else "米国PPI（生産者物価指数）")
+            out.append(mk_event(dt_jst.date(), name, "米国",
                 f"{title}。米金利・ドル円・株式市場の反応に注目。",
-                url, "U.S. Bureau of Labor Statistics", dt.strftime("%H:%M")))
-        except (ValueError, IndexError):
+                url, "U.S. Bureau of Labor Statistics（公式iCalendar）", dt_jst.strftime("%H:%M")))
+        except (ValueError, KeyError):
             continue
     return out
 
@@ -120,7 +141,7 @@ def parse_boj(html):
     # The Bank of Japan's release schedule is updated regularly. Parse date-led rows
     # conservatively; no event is added unless a recognizable official date/title exists.
     month_names = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec"
-    pat = re.compile(rf"(?i)\b({month_names})\.?\s+(\d{{1,2}})\s+(?:\([^)]*\)\s*)?([^\\n]{{0,180}})")
+    pat = re.compile(rf"(?i)\b({month_names})\.?\s+(\d{{1,2}})\s+(?:\([^)]*\)\s*)?([^\n]{{0,180}})")
     month_map = {m.lower(): i for i,m in enumerate(
         ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],1)}
     for m in pat.finditer(text):
@@ -168,9 +189,10 @@ def main():
         except Exception as exc:
             errors.append(f"{key}: {exc}")
             print(f"WARNING {key}: {exc}")
-    # If all sources fail, keep existing data intact to avoid blanking the panel.
-    if not parsed and errors:
-        raise SystemExit("All official sources failed; leaving events.json unchanged.")
+    # All-or-nothing: if any source is unavailable, do not save a partial refresh.
+    # This prevents one failed source from accidentally deleting its upcoming events.
+    if errors:
+        raise SystemExit("One or more official sources failed; leaving events.json unchanged: " + "; ".join(errors))
     # Preserve other manually maintained high-impact events, but replace known
     # source-generated events to prevent stale dates from lingering.
     generated_names = ("FOMC", "日銀金融政策決定会合", "日銀・企業向けサービス価格指数",
@@ -188,8 +210,6 @@ def main():
     data["updatedAt"] = datetime.now(JST).strftime("%Y-%m-%d %H:%M JST") + "（公式スケジュール確認）"
     DATA.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Saved {len(data['economicEvents'])} events and preserved {len(data.get('earnings', []))} earnings entries.")
-    if errors:
-        print("Some sources failed; review warnings:", "; ".join(errors))
 
 if __name__ == "__main__":
     main()
