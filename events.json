@@ -1,5 +1,171 @@
 {
-  "updatedAt": "未更新",
+  "updatedAt": "2026-10-25（公式IR確認）",
   "economicEvents": [],
-  "earnings": []
+  "earnings": [
+    {
+      "date": "2026-10-28",
+      "timeJst": "15:30",
+      "market": "日本",
+      "name": "アドバンテスト（6857）",
+      "detail": "2027年3月期 第2四半期決算。半導体テスター・AI投資動向に注目。",
+      "confirmed": true,
+      "status": "公式発表予定",
+      "sourceName": "アドバンテスト公式IR",
+      "sourceUrl": "https://www.advantest.com/en/investors/ir-calendar/"
+    },
+    {
+      "date": "2026-10-30",
+      "timeJst": "18:45",
+      "market": "日本",
+      "name": "キオクシアホールディングス（285A）",
+      "detail": "2027年3月期 第2四半期決算。NANDメモリ市況・AIデータセンター需要に注目。",
+      "confirmed": true,
+      "status": "公式発表予定",
+      "sourceName": "キオクシア公式IR",
+      "sourceUrl": "https://www.kioxia-holdings.com/ja-jp/ir/news.html"
+    },
+    {
+      "date": "2026-11-10",
+      "timeJst": "",
+      "market": "日本",
+      "name": "ソフトバンクグループ（9984）",
+      "detail": "2027年3月期 第2四半期決算。AI投資・Armなど投資先の評価に注目。",
+      "confirmed": true,
+      "status": "公式発表予定",
+      "sourceName": "ソフトバンクグループ公式IR",
+      "sourceUrl": "https://group.softbank/ir/calendar"
+    },
+    {
+      "date": null,
+      "timeJst": "",
+      "market": "米国",
+      "name": "NVIDIA（NVDA）",
+      "detail": "AI半導体・データセンター需要の重要指標。次回決算日が公式発表されたら更新。",
+      "confirmed": false,
+      "status": "次回日程未確認",
+      "sourceName": "NVIDIA Investor Relations",
+      "sourceUrl": "https://investor.nvidia.com/"
+    },
+    {
+      "date": null,
+      "timeJst": "",
+      "market": "米国",
+      "name": "Tesla（TSLA）",
+      "detail": "EV需要・販売・利益率・AI関連の動向。直近の2026年Q3決算は10月21日発表済み。",
+      "confirmed": false,
+      "status": "次回日程未確認",
+      "sourceName": "Tesla Investor Relations",
+      "sourceUrl": "https://ir.tesla.com/"
+    },
+    {
+      "date": null,
+      "timeJst": "",
+      "market": "日本",
+      "name": "東京エレクトロン（8035）",
+      "detail": "半導体製造装置。設備投資・受注動向に注目。",
+      "confirmed": false,
+      "status": "次回日程未確認",
+      "sourceName": "東京エレクトロン公式IR",
+      "sourceUrl": "https://www.tel.co.jp/ir/"
+    },
+    {
+      "date": null,
+      "timeJst": "",
+      "market": "日本",
+      "name": "ディスコ（6146）",
+      "detail": "半導体製造装置・加工需要の先行指標。",
+      "confirmed": false,
+      "status": "次回日程未確認",
+      "sourceName": "ディスコ公式IR",
+      "sourceUrl": "https://www.disco.co.jp/jp/ir/"
+    },
+    {
+      "date": null,
+      "timeJst": "",
+      "market": "米国",
+      "name": "Broadcom（AVGO）",
+      "detail": "AI向け半導体・ネットワーク需要に注目。",
+      "confirmed": false,
+      "status": "次回日程未確認",
+      "sourceName": "Broadcom Investor Relations",
+      "sourceUrl": "https://investors.broadcom.com/"
+    },
+    {
+      "date": null,
+      "timeJst": "",
+      "market": "米国",
+      "name": "Micron Technology（MU）",
+      "detail": "メモリ価格・需給の参考指標。キオクシア関連として注目。",
+      "confirmed": false,
+      "status": "次回日程未確認",
+      "sourceName": "Micron Investor Relations",
+      "sourceUrl": "https://investors.micron.com/"
+    },
+    {
+      "date": null,
+      "timeJst": "",
+      "market": "米国",
+      "name": "AMD（AMD）",
+      "detail": "AI半導体・CPUの需要動向に注目。",
+      "confirmed": false,
+      "status": "次回日程未確認",
+      "sourceName": "AMD Investor Relations",
+      "sourceUrl": "https://ir.amd.com/"
+    },
+    {
+      "date": null,
+      "timeJst": "",
+      "market": "米国",
+      "name": "Microsoft（MSFT）",
+      "detail": "クラウド成長とAI設備投資の重要指標。",
+      "confirmed": false,
+      "status": "次回日程未確認",
+      "sourceName": "Microsoft Investor Relations",
+      "sourceUrl": "https://www.microsoft.com/en-us/Investor/"
+    },
+    {
+      "date": null,
+      "timeJst": "",
+      "market": "米国",
+      "name": "Amazon（AMZN）",
+      "detail": "AWS・消費動向・AI設備投資に注目。",
+      "confirmed": false,
+      "status": "次回日程未確認",
+      "sourceName": "Amazon Investor Relations",
+      "sourceUrl": "https://ir.aboutamazon.com/"
+    },
+    {
+      "date": null,
+      "timeJst": "",
+      "market": "米国",
+      "name": "Apple（AAPL）",
+      "detail": "スマートフォン需要・世界消費の参考指標。",
+      "confirmed": false,
+      "status": "次回日程未確認",
+      "sourceName": "Apple Investor Relations",
+      "sourceUrl": "https://investor.apple.com/"
+    },
+    {
+      "date": null,
+      "timeJst": "",
+      "market": "日本",
+      "name": "トヨタ自動車（7203）",
+      "detail": "自動車需要・為替・世界景気の参考指標。",
+      "confirmed": false,
+      "status": "次回日程未確認",
+      "sourceName": "トヨタ自動車公式IR",
+      "sourceUrl": "https://global.toyota/jp/ir/"
+    },
+    {
+      "date": null,
+      "timeJst": "",
+      "market": "日本",
+      "name": "ファーストリテイリング（9983）",
+      "detail": "日経平均への寄与度が大きく、消費動向にも注目。",
+      "confirmed": false,
+      "status": "次回日程未確認",
+      "sourceName": "ファーストリテイリング公式IR",
+      "sourceUrl": "https://www.fastretailing.com/jp/ir/"
+    }
+  ]
 }
