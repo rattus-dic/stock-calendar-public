@@ -1,4 +1,4 @@
-name: Refresh Important Market Events
+name: Refresh Important Market Events and Earnings
 
 on:
   schedule:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: refresh-important-market-events
+  group: refresh-market-events-and-earnings
   cancel-in-progress: false
 
 jobs:
@@ -22,15 +22,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-      - name: Refresh official event schedules
+      - name: Refresh official macro event schedules
         run: python scripts/update_events.py
-      - name: Commit changed event data
+      - name: Refresh 50-company earnings calendar
+        run: python scripts/update_earnings.py
+      - name: Commit changed event and earnings data
         run: |
           if ! git diff --quiet -- events.json; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add events.json
-            git commit -m "Refresh important market events"
+            git commit -m "Refresh market events and earnings calendar"
             git push
           else
             echo "No event data changes."
