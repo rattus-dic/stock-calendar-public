@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-26 00:39 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-10-26 00:54 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -89,7 +89,7 @@
     },
     {
       "date": "2026-10-27",
-      "timeJst": "米国市場引け後（正確な時刻未確認）",
+      "timeJst": "米国市場引け後",
       "market": "米国",
       "name": "Visa（V）",
       "ticker": "V",
@@ -125,7 +125,7 @@
     },
     {
       "date": "2026-10-28",
-      "timeJst": "米国市場引け後（正確な時刻未確認）",
+      "timeJst": "米国市場引け後",
       "market": "米国",
       "name": "Alphabet（GOOGL）",
       "ticker": "GOOGL",
@@ -137,7 +137,7 @@
     },
     {
       "date": "2026-10-28",
-      "timeJst": "米国市場引け後（正確な時刻未確認）",
+      "timeJst": "米国市場引け後",
       "market": "米国",
       "name": "Microsoft（MSFT）",
       "ticker": "MSFT",
@@ -161,7 +161,7 @@
     },
     {
       "date": "2026-10-29",
-      "timeJst": "米国市場引け後（正確な時刻未確認）",
+      "timeJst": "米国市場引け後",
       "market": "米国",
       "name": "Amazon（AMZN）",
       "ticker": "AMZN",
@@ -269,7 +269,7 @@
     },
     {
       "date": "2026-11-02",
-      "timeJst": "米国市場引け後（正確な時刻未確認）",
+      "timeJst": "米国市場引け後",
       "market": "米国",
       "name": "Apple（AAPL）",
       "ticker": "AAPL",
@@ -281,7 +281,7 @@
     },
     {
       "date": "2026-11-02",
-      "timeJst": "米国市場引け後（正確な時刻未確認）",
+      "timeJst": "米国市場引け後",
       "market": "米国",
       "name": "Palantir Technologies（PLTR）",
       "ticker": "PLTR",
@@ -293,7 +293,7 @@
     },
     {
       "date": "2026-11-03",
-      "timeJst": "米国市場引け後（正確な時刻未確認）",
+      "timeJst": "米国市場引け後",
       "market": "米国",
       "name": "AMD（AMD）",
       "ticker": "AMD",
@@ -305,7 +305,7 @@
     },
     {
       "date": "2026-11-04",
-      "timeJst": "米国市場引け後（正確な時刻未確認）",
+      "timeJst": "米国市場引け後",
       "market": "米国",
       "name": "Qualcomm（QCOM）",
       "ticker": "QCOM",
@@ -328,5 +328,5 @@
       "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-06"
     }
   ],
-  "earningsUpdatedAt": "2026-10-26 00:40 JST"
+  "earningsUpdatedAt": "2026-10-26 00:54 JST"
 }
