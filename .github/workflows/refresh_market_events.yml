@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: refresh-important-market-events
+  cancel-in-progress: false
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
@@ -18,9 +22,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
-      - name: Refresh event calendar from official sources
+      - name: Refresh official event schedules
         run: python scripts/update_events.py
-      - name: Commit updated events
+      - name: Commit changed event data
         run: |
           if ! git diff --quiet -- events.json; then
             git config user.name "github-actions[bot]"
