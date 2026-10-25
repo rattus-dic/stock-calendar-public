@@ -193,7 +193,7 @@ function renderEventList(targetId, rows, emptyText) {
   const todayKey = key(new Date().getFullYear(), new Date().getMonth()+1, new Date().getDate());
   const end = new Date(); end.setDate(end.getDate() + 14);
   const endKey = key(end.getFullYear(), end.getMonth()+1, end.getDate());
-  const isEconomic = targetId.toLowerCase().includes('event');
+  const isEconomic = targetId === 'economicEvents';
   const visible = rows.filter(row => {
     if (isEconomic && row.importance !== '最重要') return false;
     if (!row.date) return !isEconomic;
