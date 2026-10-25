@@ -1,0 +1,305 @@
+{
+  "description": "日米の重要銘柄50社。更新スクリプトはticker/codeで対象銘柄を絞り込みます。",
+  "companies": [
+    {
+      "market": "JP",
+      "ticker": "6857",
+      "name": "アドバンテスト",
+      "irUrl": "https://www.advantest.com/ja/investors/ir-calendar/"
+    },
+    {
+      "market": "JP",
+      "ticker": "8035",
+      "name": "東京エレクトロン",
+      "irUrl": "https://www.tel.co.jp/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "6146",
+      "name": "ディスコ",
+      "irUrl": "https://www.disco.co.jp/jp/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "6920",
+      "name": "レーザーテック",
+      "irUrl": "https://www.lasertec.co.jp/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "285A",
+      "name": "キオクシアホールディングス",
+      "irUrl": "https://www.kioxia-holdings.com/ja-jp/ir/news.html"
+    },
+    {
+      "market": "JP",
+      "ticker": "5803",
+      "name": "フジクラ",
+      "irUrl": "https://www.fujikura.co.jp/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "6981",
+      "name": "村田製作所",
+      "irUrl": "https://corporate.murata.com/ja-jp/ir"
+    },
+    {
+      "market": "JP",
+      "ticker": "6723",
+      "name": "ルネサスエレクトロニクス",
+      "irUrl": "https://www.renesas.com/ja/about/investor-relations"
+    },
+    {
+      "market": "JP",
+      "ticker": "7203",
+      "name": "トヨタ自動車",
+      "irUrl": "https://global.toyota/jp/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "6954",
+      "name": "ファナック",
+      "irUrl": "https://www.fanuc.co.jp/ja/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "6506",
+      "name": "安川電機",
+      "irUrl": "https://www.yaskawa.co.jp/ir"
+    },
+    {
+      "market": "JP",
+      "ticker": "7011",
+      "name": "三菱重工業",
+      "irUrl": "https://www.mhi.com/jp/finance"
+    },
+    {
+      "market": "JP",
+      "ticker": "6501",
+      "name": "日立製作所",
+      "irUrl": "https://www.hitachi.co.jp/IR/"
+    },
+    {
+      "market": "JP",
+      "ticker": "8306",
+      "name": "三菱UFJフィナンシャル・グループ",
+      "irUrl": "https://www.mufg.jp/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "8316",
+      "name": "三井住友フィナンシャルグループ",
+      "irUrl": "https://www.smfg.co.jp/investor/"
+    },
+    {
+      "market": "JP",
+      "ticker": "8766",
+      "name": "東京海上ホールディングス",
+      "irUrl": "https://www.tokiomarinehd.com/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "9984",
+      "name": "ソフトバンクグループ",
+      "irUrl": "https://group.softbank/ir/calendar"
+    },
+    {
+      "market": "JP",
+      "ticker": "9432",
+      "name": "NTT",
+      "irUrl": "https://group.ntt/jp/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "9433",
+      "name": "KDDI",
+      "irUrl": "https://www.kddi.com/corporate/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "9983",
+      "name": "ファーストリテイリング",
+      "irUrl": "https://www.fastretailing.com/jp/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "8267",
+      "name": "イオン",
+      "irUrl": "https://www.aeon.info/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "7974",
+      "name": "任天堂",
+      "irUrl": "https://www.nintendo.co.jp/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "4568",
+      "name": "第一三共",
+      "irUrl": "https://www.daiichisankyo.co.jp/investors/"
+    },
+    {
+      "market": "JP",
+      "ticker": "4063",
+      "name": "信越化学工業",
+      "irUrl": "https://www.shinetsu.co.jp/jp/ir/"
+    },
+    {
+      "market": "JP",
+      "ticker": "6098",
+      "name": "リクルートホールディングス",
+      "irUrl": "https://recruit-holdings.com/ja/ir/"
+    },
+    {
+      "market": "US",
+      "ticker": "NVDA",
+      "name": "NVIDIA",
+      "irUrl": "https://investor.nvidia.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "AMD",
+      "name": "AMD",
+      "irUrl": "https://ir.amd.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "AVGO",
+      "name": "Broadcom",
+      "irUrl": "https://investors.broadcom.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "MU",
+      "name": "Micron Technology",
+      "irUrl": "https://investors.micron.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "QCOM",
+      "name": "Qualcomm",
+      "irUrl": "https://investor.qualcomm.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "MSFT",
+      "name": "Microsoft",
+      "irUrl": "https://www.microsoft.com/en-us/Investor/"
+    },
+    {
+      "market": "US",
+      "ticker": "GOOGL",
+      "name": "Alphabet",
+      "irUrl": "https://abc.xyz/investor/"
+    },
+    {
+      "market": "US",
+      "ticker": "AMZN",
+      "name": "Amazon",
+      "irUrl": "https://ir.aboutamazon.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "META",
+      "name": "Meta Platforms",
+      "irUrl": "https://investor.fb.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "AAPL",
+      "name": "Apple",
+      "irUrl": "https://investor.apple.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "TSLA",
+      "name": "Tesla",
+      "irUrl": "https://ir.tesla.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "JPM",
+      "name": "JPMorgan Chase",
+      "irUrl": "https://www.jpmorganchase.com/ir"
+    },
+    {
+      "market": "US",
+      "ticker": "BRK.B",
+      "name": "Berkshire Hathaway",
+      "irUrl": "https://www.berkshirehathaway.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "V",
+      "name": "Visa",
+      "irUrl": "https://investor.visa.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "WMT",
+      "name": "Walmart",
+      "irUrl": "https://stock.walmart.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "COST",
+      "name": "Costco Wholesale",
+      "irUrl": "https://investor.costco.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "NFLX",
+      "name": "Netflix",
+      "irUrl": "https://ir.netflix.net/"
+    },
+    {
+      "market": "US",
+      "ticker": "CRM",
+      "name": "Salesforce",
+      "irUrl": "https://investor.salesforce.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "ORCL",
+      "name": "Oracle",
+      "irUrl": "https://investor.oracle.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "PLTR",
+      "name": "Palantir Technologies",
+      "irUrl": "https://investors.palantir.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "LLY",
+      "name": "Eli Lilly",
+      "irUrl": "https://investor.lilly.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "JNJ",
+      "name": "Johnson & Johnson",
+      "irUrl": "https://investor.jnj.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "XOM",
+      "name": "Exxon Mobil",
+      "irUrl": "https://investor.exxonmobil.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "CAT",
+      "name": "Caterpillar",
+      "irUrl": "https://investors.caterpillar.com/"
+    },
+    {
+      "market": "US",
+      "ticker": "KO",
+      "name": "Coca-Cola",
+      "irUrl": "https://investors.coca-colacompany.com/"
+    }
+  ]
+}

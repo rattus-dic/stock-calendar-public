@@ -195,9 +195,11 @@ function renderEventList(targetId, rows, emptyText) {
   const endKey = key(end.getFullYear(), end.getMonth()+1, end.getDate());
   const isEconomic = targetId === 'economicEvents';
   const visible = rows.filter(row => {
+    // Economic events and earnings both show only today through 14 days ahead.
+    // Undated earnings are retained in events.json but are not shown as upcoming events.
     if (isEconomic && row.importance !== '最重要') return false;
-    if (!row.date) return !isEconomic;
-    return row.date >= todayKey && (!isEconomic || row.date <= endKey);
+    if (!row.date) return false;
+    return row.date >= todayKey && row.date <= endKey;
   }).sort((a,b) => String(a.date || '9999').localeCompare(String(b.date || '9999')));
   if (!visible.length) {
     target.innerHTML = `<p class="note">今後の予定は登録されていません。</p>`;
