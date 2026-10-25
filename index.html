@@ -39,11 +39,40 @@ select{flex:1;min-width:0}
 .metric strong{display:block;font-size:20px;margin-top:5px}.metric strong.indicator-value{font-size:23px}.indicator-value .metric-number{font-size:1em}.indicator-value .unit-small{font-size:11px;font-weight:700;white-space:nowrap;display:inline;vertical-align:baseline}.positive{color:#91efb4}.negative{color:#ffaaaa}.neutral{color:var(--muted)}
 .note{font-size:12px;line-height:1.7;color:var(--muted)}
 @media(max-width:430px){main{padding:9px}.day{min-height:76px;padding:4px 2px;gap:4px}.monthbar button{padding:8px 5px;font-size:12px}h1{font-size:19px}}
+
+.event-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.event-list{display:flex;flex-direction:column;gap:8px}
+.event-item{padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:#2b2b2b}
+.event-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.event-date{font-size:12px;color:#b8d7ff;white-space:nowrap}
+.event-title{font-weight:750;line-height:1.45}
+.event-meta{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}
+.event-tag{display:inline-block;font-size:11px;border:1px solid #555;border-radius:999px;padding:2px 7px;color:#ddd;margin-right:5px}
+.event-source{overflow-wrap:anywhere}
+@media(max-width:600px){.event-grid{grid-template-columns:1fr}.event-item{padding:9px}}
+
 </style>
 </head>
 <body>
 <main>
 <header><h1>📈 株価カレンダー</h1><span class="muted">β版</span></header>
+
+<section class="panel" id="eventsPanel" aria-labelledby="eventsHeading">
+  <h2 id="eventsHeading" style="font-size:19px;margin:0 0 6px">🗓️ 重要イベント・日米決算</h2>
+  <p class="note" id="eventsUpdated">イベント情報を読み込み中…</p>
+  <div class="event-grid">
+    <div>
+      <h3 style="margin:6px 0 10px">🌏 重要イベント</h3>
+      <div class="event-list" id="economicEvents"><p class="note">読み込み中…</p></div>
+    </div>
+    <div>
+      <h3 style="margin:6px 0 10px">📊 決算予定（日米）</h3>
+      <div class="event-list" id="earningsEvents"><p class="note">読み込み中…</p></div>
+    </div>
+  </div>
+  <p class="note" style="margin-bottom:0">予定は変更される場合があります。発表日時・情報源を確認し、未確認情報は「未確認」と表示します。</p>
+</section>
+
 <div class="toolbar">
 <select id="index" aria-label="指数">
 <option value="nikkei">日経平均</option>
@@ -134,6 +163,62 @@ select{flex:1;min-width:0}
 </main>
 <script>
 const $ = id => document.getElementById(id);
+
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+}[ch]));
+function eventDateLabel(value, time, market) {
+  if (!value) return '日程未定';
+  const d = new Date(value + 'T00:00:00+09:00');
+  if (Number.isNaN(d.getTime())) return escapeHtml(value);
+  const date = `${d.getMonth()+1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）`;
+  return `${date}${time ? ' ' + escapeHtml(time) : ''}${market ? ' · ' + escapeHtml(market) : ''}`;
+}
+function renderEventList(targetId, rows, emptyText) {
+  const target = $(targetId);
+  if (!Array.isArray(rows) || rows.length === 0) {
+    target.innerHTML = `<p class="note">${escapeHtml(emptyText)}</p>`;
+    return;
+  }
+  const todayKey = key(new Date().getFullYear(), new Date().getMonth()+1, new Date().getDate());
+  const visible = rows.filter(row => !row.date || row.date >= todayKey)
+    .sort((a,b) => String(a.date || '9999').localeCompare(String(b.date || '9999')))
+    .slice(0, 12);
+  if (!visible.length) {
+    target.innerHTML = `<p class="note">今後の予定は登録されていません。</p>`;
+    return;
+  }
+  target.innerHTML = visible.map(row => {
+    const status = row.confirmed === false ? '未確認' : (row.status || '予定');
+    const source = row.sourceUrl
+      ? `<a href="${escapeHtml(row.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(row.sourceName || '情報源')}</a>`
+      : escapeHtml(row.sourceName || '情報源未登録');
+    const detail = [row.detail, `情報源：${source}`].filter(Boolean).join(' · ');
+    return `<article class="event-item">
+      <div class="event-top"><span class="event-date">${eventDateLabel(row.date, row.timeJst || row.time, row.market)}</span><span class="event-tag">${escapeHtml(status)}</span></div>
+      <div class="event-title">${escapeHtml(row.name || '名称未登録')}</div>
+      <div class="event-meta">${detail}</div>
+    </article>`;
+  }).join('');
+}
+async function loadEvents() {
+  const status = $('eventsUpdated');
+  status.textContent = 'イベント情報を読み込み中…';
+  try {
+    const response = await fetch('./events.json', {cache:'no-store'});
+    if (!response.ok) throw new Error(`events.json (${response.status})`);
+    const payload = await response.json();
+    renderEventList('economicEvents', payload.economicEvents, '重要イベントはまだ登録されていません。');
+    renderEventList('earningsEvents', payload.earnings, '決算予定はまだ登録されていません。保有・注目銘柄の登録後に優先表示します。');
+    status.textContent = `イベント情報：更新 ${payload.updatedAt || '日時不明'} · 出典・確定状況は各項目を確認`;
+  } catch (error) {
+    renderEventList('economicEvents', [], 'events.json を読み込めません。');
+    renderEventList('earningsEvents', [], 'events.json を読み込めません。');
+    status.textContent = 'イベント情報：読み込み失敗。公開先に events.json があるか確認してください。';
+    console.error(error);
+  }
+}
+
 const today = new Date();
 let year = today.getFullYear();
 let month = today.getMonth() + 1; // 1〜12月
@@ -471,13 +556,14 @@ $('next').onclick = () => {
   render();
 };
 $('index').onchange = e => { index = e.target.value; render(); };
-$('refresh').onclick = () => { loadPrices(); loadIndicatorHistory(); };
+$('refresh').onclick = () => { loadPrices(); loadIndicatorHistory(); loadEvents(); };
 $('historyMetric').onchange = renderIndicatorHistory;
 $('historyRange').onchange = renderIndicatorHistory;
 
 render();
 loadPrices();
 loadIndicatorHistory();
+loadEvents();
 </script>
 </body>
 </html>
