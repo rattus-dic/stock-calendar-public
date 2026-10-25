@@ -68,7 +68,7 @@ def nasdaq_rows(watch):
             raw_time = str(row.get('time') or row.get('timeOfDay') or '').lower().replace('_','-')
             # Nasdaq's session labels are not exact release times; never fabricate HH:MM.
             if 'after' in raw_time or 'close' in raw_time:
-                label = '米国市場引け後（正確な時刻未確認）'
+                label = '米国市場引け後'
             elif 'before' in raw_time or 'open' in raw_time:
                 label = '米国市場開始前（正確な時刻未確認）'
             else:
