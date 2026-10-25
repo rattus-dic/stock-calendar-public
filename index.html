@@ -208,7 +208,7 @@ function renderEventList(targetId, rows, emptyText) {
   const dated = visible.filter(row => row.date);
   const undated = visible.filter(row => !row.date);
   // 初期表示は直近5件まで。未確認日程は折りたたみ、必要なときだけ開ける。
-  const initial = [...dated.slice(0, 5), ...(!dated.length ? undated.slice(0, 2) : [])];
+  const initial = [...dated.slice(0, 3), ...(!dated.length ? undated.slice(0, 2) : [])];
   const shown = expanded ? visible : initial;
   target.innerHTML = shown.map(row => {
     const status = row.confirmed === false ? '日程未確認' : (row.importance || row.status || '予定');
