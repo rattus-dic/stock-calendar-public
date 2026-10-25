@@ -57,7 +57,7 @@ select{flex:1;min-width:0}
 <main>
 <header><h1>📈 株価カレンダー</h1><span class="muted">β版</span></header>
 
-<section class="panel" id="eventsPanel" aria-labelledby="eventsHeading">
+<section class="panel" id="eventsPanel" aria-labelledby="eventsHeading" style="margin-bottom:18px">
   <h2 id="eventsHeading" style="font-size:19px;margin:0 0 6px">🗓️ 重要イベント・日米決算</h2>
   <p class="note" id="eventsUpdated">イベント情報を読み込み中…</p>
   <div class="event-grid">
@@ -195,6 +195,7 @@ function renderEventList(targetId, rows, emptyText) {
   const endKey = key(end.getFullYear(), end.getMonth()+1, end.getDate());
   const isEconomic = targetId.toLowerCase().includes('event');
   const visible = rows.filter(row => {
+    if (isEconomic && row.importance !== '最重要') return false;
     if (!row.date) return !isEconomic;
     return row.date >= todayKey && (!isEconomic || row.date <= endKey);
   }).sort((a,b) => String(a.date || '9999').localeCompare(String(b.date || '9999')));
