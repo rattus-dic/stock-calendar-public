@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-26 06:18 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-10-27 06:25 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -328,5 +328,5 @@
       "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-06"
     }
   ],
-  "earningsUpdatedAt": "2026-10-26 06:19 JST"
+  "earningsUpdatedAt": "2026-10-27 06:25 JST"
 }
