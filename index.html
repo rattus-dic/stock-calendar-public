@@ -437,17 +437,20 @@ function renderIndicatorHistory() {
     return `<line x1="${left}" y1="${yy}" x2="${width-right}" y2="${yy}" stroke="#454545" stroke-width="1"/><text x="${left-8}" y="${yy+4}" fill="#aaa" font-size="11" text-anchor="end">${Number(val.toFixed(6)).toLocaleString('ja-JP',{maximumFractionDigits:digits})}</text>`;
   }).join('');
 
-  // 5年・10年表示は各年の目盛り。全期間では米国10年債・WTI・ブレントも各年を表示する。
+  // 5年・10年表示は各年の目盛り。全期間では米国10年債・WTI・ブレントは1年ごと、日本10年債は10年ごと。
   const spanDays = (lastTime-firstTime)/86400000;
   let xTicks = [];
+  const metric = $('historyMetric').value;
   const annualAllMetrics = ['us10y', 'wti', 'brent'];
   const showAnnualTicks = range === '1825' || range === '3650' ||
-    (range === 'all' && (spanDays >= 900 || annualAllMetrics.includes($('historyMetric').value)));
+    (range === 'all' && (spanDays >= 900 || annualAllMetrics.includes(metric) || metric === 'jp10y'));
   if (showAnnualTicks) {
     const firstYear = Number(rows[0].date.slice(0,4));
     const lastYear = Number(rows[rows.length-1].date.slice(0,4));
-    const yearInterval = range === 'all' ? 1 : 1;
-    const startYear = firstYear;
+    const yearInterval = range === 'all' && metric === 'jp10y' ? 10 : 1;
+    const startYear = range === 'all' && metric === 'jp10y'
+      ? Math.ceil(firstYear / 10) * 10
+      : (range === 'all' && annualAllMetrics.includes(metric) ? firstYear : firstYear);
     for (let yr=startYear; yr<=lastYear; yr += yearInterval) {
       const date = `${yr}-01-01`;
       const xx = xForDate(date);
