@@ -437,13 +437,28 @@ function renderIndicatorHistory() {
     return `<line x1="${left}" y1="${yy}" x2="${width-right}" y2="${yy}" stroke="#454545" stroke-width="1"/><text x="${left-8}" y="${yy+4}" fill="#aaa" font-size="11" text-anchor="end">${Number(val.toFixed(6)).toLocaleString('ja-JP',{maximumFractionDigits:digits})}</text>`;
   }).join('');
 
+  // 横軸の目盛り：1か月は6営業日ごと、1年は3か月ごと。
   // 5年・10年表示は各年の目盛り。全期間では米国10年債・WTI・ブレントは1年ごと、日本10年債は10年ごと。
   const spanDays = (lastTime-firstTime)/86400000;
   let xTicks = [];
   const annualAllMetrics = ['us10y', 'wti', 'brent'];
   const showAnnualTicks = range === '1825' || range === '3650' ||
     (range === 'all' && (spanDays >= 900 || annualAllMetrics.includes(metric) || metric === 'jp10y'));
-  if (showAnnualTicks) {
+  if (range === '30') {
+    xTicks = rows.filter((_, i) => i % 6 === 0 || i === rows.length - 1).map((row, i, arr) => {
+      const xx = xForDate(row.date);
+      const anchor = i === 0 ? 'start' : i === arr.length - 1 ? 'end' : 'middle';
+      return `<line x1="${xx}" y1="${top}" x2="${xx}" y2="${height-bottom}" stroke="#383838" stroke-dasharray="2 4"/><text x="${xx}" y="${height-12}" fill="#aaa" font-size="11" text-anchor="${anchor}">${row.date.slice(5).replace('-','/')}</text>`;
+    });
+  } else if (range === '365') {
+    // 約63営業日（約3か月）ごとにラベルを置く。
+    const selected = rows.filter((_, i) => i % 63 === 0 || i === rows.length - 1);
+    xTicks = selected.map((row, i) => {
+      const xx = xForDate(row.date);
+      const anchor = i === 0 ? 'start' : i === selected.length - 1 ? 'end' : 'middle';
+      return `<line x1="${xx}" y1="${top}" x2="${xx}" y2="${height-bottom}" stroke="#383838" stroke-dasharray="2 4"/><text x="${xx}" y="${height-12}" fill="#aaa" font-size="11" text-anchor="${anchor}">${row.date.slice(0,7).replace('-','/')}</text>`;
+    });
+  } else if (showAnnualTicks) {
     const firstYear = Number(rows[0].date.slice(0,4));
     const lastYear = Number(rows[rows.length-1].date.slice(0,4));
     const yearInterval = range === 'all' && metric === 'jp10y' ? 10 : 1;
