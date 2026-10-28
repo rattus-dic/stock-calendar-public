@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-28 06:26 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-10-29 06:29 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -51,54 +51,6 @@
     }
   ],
   "earnings": [
-    {
-      "date": "2026-10-28",
-      "timeJst": "15:30",
-      "market": "日本",
-      "name": "アドバンテスト（6857）",
-      "ticker": "6857",
-      "detail": "第三者の決算カレンダー掲載情報。会社側の変更があり得るため、企業公式IRで最終確認してください。",
-      "confirmed": true,
-      "status": "予定日取得済み",
-      "sourceName": "トレーダーズ・ウェブ 決算発表スケジュール",
-      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/1"
-    },
-    {
-      "date": "2026-10-28",
-      "timeJst": "15:30",
-      "market": "日本",
-      "name": "日立製作所（6501）",
-      "ticker": "6501",
-      "detail": "第三者の決算カレンダー掲載情報。会社側の変更があり得るため、企業公式IRで最終確認してください。",
-      "confirmed": true,
-      "status": "予定日取得済み",
-      "sourceName": "トレーダーズ・ウェブ 決算発表スケジュール",
-      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/1"
-    },
-    {
-      "date": "2026-10-28",
-      "timeJst": "米国市場引け後",
-      "market": "米国",
-      "name": "Alphabet（GOOGL）",
-      "ticker": "GOOGL",
-      "detail": "Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。",
-      "confirmed": true,
-      "status": "予定日取得済み",
-      "sourceName": "Nasdaq Earnings Calendar",
-      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-10-28"
-    },
-    {
-      "date": "2026-10-28",
-      "timeJst": "米国市場引け後",
-      "market": "米国",
-      "name": "Microsoft（MSFT）",
-      "ticker": "MSFT",
-      "detail": "Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。",
-      "confirmed": true,
-      "status": "予定日取得済み",
-      "sourceName": "Nasdaq Earnings Calendar",
-      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-10-28"
-    },
     {
       "date": "2026-10-29",
       "timeJst": "09:00",
@@ -280,6 +232,18 @@
       "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-04"
     },
     {
+      "date": "2026-11-05",
+      "timeJst": "時刻未定",
+      "market": "日本",
+      "name": "トヨタ自動車（7203）",
+      "ticker": "7203",
+      "detail": "第三者の決算カレンダー掲載情報。会社側の変更があり得るため、企業公式IRで最終確認してください。",
+      "confirmed": true,
+      "status": "予定日取得済み",
+      "sourceName": "トレーダーズ・ウェブ 決算発表スケジュール",
+      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/1"
+    },
+    {
       "date": "2026-11-06",
       "timeJst": "時刻未定",
       "market": "米国",
@@ -292,5 +256,5 @@
       "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-06"
     }
   ],
-  "earningsUpdatedAt": "2026-10-28 06:26 JST"
+  "earningsUpdatedAt": "2026-10-29 06:29 JST"
 }
