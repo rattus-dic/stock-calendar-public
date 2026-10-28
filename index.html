@@ -10,6 +10,8 @@
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,sans-serif}
 main{max-width:850px;margin:auto;padding:16px}
 header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:18px}
+.header-actions{display:flex;align-items:center;gap:10px}
+#refresh{white-space:nowrap}
 h1{font-size:22px;margin:0}
 button,select{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px;font:inherit}
 button{cursor:pointer}
@@ -55,7 +57,7 @@ select{flex:1;min-width:0}
 </head>
 <body>
 <main>
-<header><h1>📈 株価カレンダー</h1><span class="muted">β版</span></header>
+<header><h1>📈 株価カレンダー</h1><div class="header-actions"><span class="muted">β版</span><button id="refresh" type="button" aria-label="ページ全体を更新">↻ 更新</button></div></header>
 
 <section class="panel" id="eventsPanel" aria-labelledby="eventsHeading" style="margin-bottom:18px">
   <h2 id="eventsHeading" style="font-size:19px;margin:0 0 6px">🗓️ 重要イベント・決算</h2>
@@ -80,7 +82,6 @@ select{flex:1;min-width:0}
 <option value="nasdaq">NASDAQ総合</option>
 <option value="sox">SOX（半導体株指数）</option>
 </select>
-<button id="refresh">更新</button>
 </div>
 <div class="monthbar">
 <button id="prev">‹ 前月</button>
@@ -623,7 +624,7 @@ $('next').onclick = () => {
   render();
 };
 $('index').onchange = e => { index = e.target.value; selectLatestAvailableDate(); render(); };
-$('refresh').onclick = () => { loadPrices(); loadIndicatorHistory(); loadEvents(); };
+$('refresh').onclick = () => { window.location.reload(); };
 $('historyMetric').onchange = renderIndicatorHistory;
 $('historyRange').onchange = renderIndicatorHistory;
 
