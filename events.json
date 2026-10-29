@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-29 06:29 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-10-30 06:31 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -12,93 +12,9 @@
       "status": "公式予定",
       "sourceName": "日本銀行 公表予定",
       "sourceUrl": "https://www.boj.or.jp/about/calendar/"
-    },
-    {
-      "date": "2026-10-29",
-      "timeJst": "03:00",
-      "market": "米国",
-      "name": "FOMC政策金利・声明発表",
-      "detail": "声明発表は通常、米東部時間14:00。記者会見は通常14:30（日本時間は季節により変動）。公式発表で最終確認。",
-      "importance": "最重要",
-      "confirmed": true,
-      "status": "公式日程",
-      "sourceName": "Federal Reserve FOMC Calendar",
-      "sourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
-    },
-    {
-      "date": "2026-10-29",
-      "timeJst": "時刻未定",
-      "market": "日本",
-      "name": "日銀金融政策決定会合（1日目）",
-      "detail": "金融政策・金利見通しに注目。",
-      "importance": "最重要",
-      "confirmed": true,
-      "status": "公式日程",
-      "sourceName": "日本銀行 会合日程",
-      "sourceUrl": "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm"
-    },
-    {
-      "date": "2026-10-30",
-      "timeJst": "時刻未定",
-      "market": "日本",
-      "name": "日銀金融政策決定会合・展望レポート",
-      "detail": "政策決定と物価・経済見通しを確認。発表時刻は未定。",
-      "importance": "最重要",
-      "confirmed": true,
-      "status": "公式日程",
-      "sourceName": "日本銀行 会合日程",
-      "sourceUrl": "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm"
     }
   ],
   "earnings": [
-    {
-      "date": "2026-10-29",
-      "timeJst": "09:00",
-      "market": "日本",
-      "name": "ルネサスエレクトロニクス（6723）",
-      "ticker": "6723",
-      "detail": "第三者の決算カレンダー掲載情報。会社側の変更があり得るため、企業公式IRで最終確認してください。",
-      "confirmed": true,
-      "status": "予定日取得済み",
-      "sourceName": "トレーダーズ・ウェブ 決算発表スケジュール",
-      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/1"
-    },
-    {
-      "date": "2026-10-29",
-      "timeJst": "米国市場引け後",
-      "market": "米国",
-      "name": "Amazon（AMZN）",
-      "ticker": "AMZN",
-      "detail": "Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。",
-      "confirmed": true,
-      "status": "予定日取得済み",
-      "sourceName": "Nasdaq Earnings Calendar",
-      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-10-29"
-    },
-    {
-      "date": "2026-10-29",
-      "timeJst": "時刻未定",
-      "market": "米国",
-      "name": "Caterpillar（CAT）",
-      "ticker": "CAT",
-      "detail": "Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。",
-      "confirmed": true,
-      "status": "予定日取得済み",
-      "sourceName": "Nasdaq Earnings Calendar",
-      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-10-29"
-    },
-    {
-      "date": "2026-10-29",
-      "timeJst": "時刻未定",
-      "market": "米国",
-      "name": "Eli Lilly（LLY）",
-      "ticker": "LLY",
-      "detail": "Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。",
-      "confirmed": true,
-      "status": "予定日取得済み",
-      "sourceName": "Nasdaq Earnings Calendar",
-      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-10-29"
-    },
     {
       "date": "2026-10-30",
       "timeJst": "18:45",
@@ -244,6 +160,18 @@
       "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/1"
     },
     {
+      "date": "2026-11-05",
+      "timeJst": "15:30",
+      "market": "日本",
+      "name": "任天堂（7974）",
+      "ticker": "7974",
+      "detail": "第三者の決算カレンダー掲載情報。会社側の変更があり得るため、企業公式IRで最終確認してください。",
+      "confirmed": true,
+      "status": "予定日取得済み",
+      "sourceName": "トレーダーズ・ウェブ 決算発表スケジュール",
+      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/1"
+    },
+    {
       "date": "2026-11-06",
       "timeJst": "時刻未定",
       "market": "米国",
@@ -256,5 +184,5 @@
       "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-06"
     }
   ],
-  "earningsUpdatedAt": "2026-10-29 06:29 JST"
+  "earningsUpdatedAt": "2026-10-30 06:32 JST"
 }
