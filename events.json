@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-30 10:49 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-10-30 11:09 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -377,6 +377,18 @@
     },
     {
       "date": "2026-11-10",
+      "timeJst": "時刻未定",
+      "market": "日本",
+      "name": "ソフトバンクグループ（9984）",
+      "ticker": "9984",
+      "detail": "会社公式IRで確認した決算発表予定日。発表時刻は未確認。",
+      "confirmed": true,
+      "status": "予定日取得済み",
+      "sourceName": "ソフトバンクグループ公式IR（補完登録）",
+      "sourceUrl": "https://group.softbank/ir/calendar"
+    },
+    {
+      "date": "2026-11-10",
       "timeJst": "14:00",
       "market": "日本",
       "name": "フジクラ（5803）",
@@ -527,7 +539,7 @@
       "ticker": "6857",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://www.advantest.com/ja/investors/ir-calendar/"
     },
@@ -539,7 +551,7 @@
       "ticker": "8267",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://www.aeon.info/ir/"
     },
@@ -551,7 +563,7 @@
       "ticker": "6146",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://www.disco.co.jp/jp/ir/"
     },
@@ -563,7 +575,7 @@
       "ticker": "6954",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://www.fanuc.co.jp/ja/ir/"
     },
@@ -575,7 +587,7 @@
       "ticker": "9983",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://www.fastretailing.com/jp/ir/"
     },
@@ -587,7 +599,7 @@
       "ticker": "6723",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://www.renesas.com/ja/about/investor-relations"
     },
@@ -599,7 +611,7 @@
       "ticker": "4063",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://www.shinetsu.co.jp/jp/ir/"
     },
@@ -611,7 +623,7 @@
       "ticker": "6506",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://www.yaskawa.co.jp/ir"
     },
@@ -623,7 +635,7 @@
       "ticker": "6501",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://www.hitachi.co.jp/IR/"
     },
@@ -635,7 +647,7 @@
       "ticker": "GOOGL",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://abc.xyz/investor/"
     },
@@ -647,7 +659,7 @@
       "ticker": "AMZN",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://ir.aboutamazon.com/"
     },
@@ -659,7 +671,7 @@
       "ticker": "CAT",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://investors.caterpillar.com/"
     },
@@ -671,7 +683,7 @@
       "ticker": "KO",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://investors.coca-colacompany.com/"
     },
@@ -683,7 +695,7 @@
       "ticker": "LLY",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://investor.lilly.com/"
     },
@@ -695,7 +707,7 @@
       "ticker": "JPM",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://www.jpmorganchase.com/ir"
     },
@@ -707,7 +719,7 @@
       "ticker": "JNJ",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://investor.jnj.com/"
     },
@@ -719,7 +731,7 @@
       "ticker": "META",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://investor.fb.com/"
     },
@@ -731,7 +743,7 @@
       "ticker": "MSFT",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://www.microsoft.com/en-us/Investor/"
     },
@@ -743,7 +755,7 @@
       "ticker": "NFLX",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://ir.netflix.net/"
     },
@@ -755,7 +767,7 @@
       "ticker": "TSLA",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://ir.tesla.com/"
     },
@@ -767,10 +779,10 @@
       "ticker": "V",
       "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
       "confirmed": false,
-      "status": "日程未確認",
+      "status": "次回日程未確認",
       "sourceName": "自動照合",
       "sourceUrl": "https://investor.visa.com/"
     }
   ],
-  "earningsUpdatedAt": "2026-10-30 10:52 JST"
+  "earningsUpdatedAt": "2026-10-30 11:13 JST"
 }
