@@ -55,7 +55,7 @@ select{flex:1;min-width:0}
 </head>
 <body>
 <main>
-<header><h1>📈 株価カレンダー</h1><span class="muted">β版</span></header>
+<header><h1>📈 株価カレンダー</h1><div style="display:flex;align-items:center;gap:10px"><span class="muted">β版</span><button id="refresh" type="button">↻ 更新</button></div></header>
 
 <section class="panel" id="eventsPanel" aria-labelledby="eventsHeading" style="margin-bottom:18px">
   <h2 id="eventsHeading" style="font-size:19px;margin:0 0 6px">🗓️ 重要イベント・決算</h2>
@@ -81,7 +81,6 @@ select{flex:1;min-width:0}
 <option value="nasdaq">NASDAQ総合</option>
 <option value="sox">SOX（半導体株指数）</option>
 </select>
-<button id="refresh">更新</button>
 </div>
 <div class="monthbar">
 <button id="prev">‹ 前月</button>
