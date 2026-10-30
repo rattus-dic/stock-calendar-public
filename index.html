@@ -645,9 +645,15 @@ function renderIndicatorHistory() {
 
   chart.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}の履歴グラフ" style="display:block;width:100%;height:auto"><rect width="${width}" height="${height}" fill="transparent"/>${grid}${xTicks.join('')}<polyline points="${points}" fill="none" stroke="#65a9ff" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
   // 表は最新の7件に限定して、スマートフォンでも見やすくする。
-  $('historyRows').innerHTML = rows.slice(-7).reverse().map(row =>
-    `<tr><td style="padding:8px;border-bottom:1px solid var(--line)">${row.date}</td><td style="text-align:right;padding:8px;border-bottom:1px solid var(--line)">${row.value.toLocaleString('ja-JP',{minimumFractionDigits:digits,maximumFractionDigits:digits})}</td></tr>`
-  ).join('');
+  const chronological = rows.slice(-7);
+  $('historyRows').innerHTML = chronological.slice().reverse().map((row, reverseIndex) => {
+    const index = chronological.length - 1 - reverseIndex;
+    const previous = index > 0 ? chronological[index - 1].value : null;
+    const valueColor = previous === null || row.value === previous
+      ? '#f2f2f2'
+      : row.value > previous ? '#91efb4' : '#ffaaaa';
+    return `<tr><td style="padding:8px;border-bottom:1px solid var(--line)">${row.date}</td><td style="text-align:left;padding:8px;border-bottom:1px solid var(--line);color:${valueColor}">${row.value.toLocaleString('ja-JP',{minimumFractionDigits:digits,maximumFractionDigits:digits})}</td></tr>`;
+  }).join('');
 }
 
 async function loadIndicatorHistory() {
@@ -750,7 +756,9 @@ function render() {
   }
 
   $('count').textContent = count + '日';
-  $('days').textContent = count ? `${up}日 / ${down}日` : '— / —';
+  $('days').innerHTML = count
+    ? `<span class="uptext">${up}日</span><span class="muted"> / </span><span class="downtext">${down}日</span>`
+    : '— / —';
   renderPerformance();
 
   const v = prices[index]?.[selected];
