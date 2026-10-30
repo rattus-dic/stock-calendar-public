@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Refresh the calendar's high-impact macro events from official schedules.
+"""Refresh the calendar's high-impact macro events from official schedules (90-day horizon).
 
 Earnings entries are preserved from events.json. Company earnings dates are not
 scraped from IR pages yet; they must remain explicitly confirmed/unknown.
@@ -17,7 +17,7 @@ DATA = ROOT / "events.json"
 JST = ZoneInfo("Asia/Tokyo")
 ET = ZoneInfo("America/New_York")
 TODAY = datetime.now(JST).date()
-END = TODAY + timedelta(days=30)
+END = TODAY + timedelta(days=90)
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 
 SOURCES = {
@@ -36,6 +36,9 @@ BLS_FALLBACK_2026 = [
     (date(2026, 12, 4), "米国雇用統計", "Employment Situation for November 2026"),
     (date(2026, 12, 10), "米国CPI（消費者物価指数）", "Consumer Price Index for November 2026"),
     (date(2026, 12, 15), "米国PPI（生産者物価指数）", "Producer Price Index for November 2026"),
+    (date(2027, 1, 8), "米国雇用統計", "Employment Situation for December 2026"),
+    (date(2027, 1, 13), "米国CPI（消費者物価指数）", "Consumer Price Index for December 2026"),
+    (date(2027, 1, 14), "米国PPI（生産者物価指数）", "Producer Price Index for December 2026"),
 ]
 
 def fetch(url):
@@ -170,8 +173,8 @@ def parse_bls(ics_text):
 def parse_bls_fallback():
     """Use known dates from BLS's published 2026 annual release schedule."""
     out = []
-    url = "https://www.bls.gov/schedule/2026/home.htm"
     for eastern_day, name, title in BLS_FALLBACK_2026:
+        url = f"https://www.bls.gov/schedule/{eastern_day.year}/home.htm"
         release_jst = datetime.combine(eastern_day, time(8, 30), ET).astimezone(JST)
         event_day = release_jst.date()
         if TODAY <= event_day <= END:
@@ -198,6 +201,8 @@ def parse_boj(html):
         try:
             mo = month_map[m.group(1).lower()[:3]]
             day = date(TODAY.year, mo, int(m.group(2)))
+            if day < TODAY - timedelta(days=7):
+                day = date(TODAY.year + 1, mo, int(m.group(2)))
             title = re.sub(r"\s+", " ", m.group(3)).strip(" :-|")
             if not TODAY <= day <= END:
                 continue
@@ -274,10 +279,28 @@ def main():
         if source_key in successful
         for pattern in patterns
     )
-    preserved = [
-        event for event in data.get("economicEvents", [])
-        if not any(pattern in event.get("name", "") for pattern in replace_patterns)
-    ]
+    # Keep all future entries from sources that were refreshed but not returned
+    # by the parser. This avoids deleting a valid official date because a page
+    # temporarily changed its HTML or exposed only part of its schedule.
+    preserved = []
+    for event in data.get("economicEvents", []):
+        name = event.get("name", "")
+        is_managed = any(pattern in name for pattern in replace_patterns)
+        if not is_managed:
+            preserved.append(event)
+            continue
+        raw_day = event.get("date")
+        try:
+            event_day = date.fromisoformat(str(raw_day))
+        except (TypeError, ValueError):
+            preserved.append(event)
+            continue
+        if event_day >= TODAY and not any(
+            fresh.get("date") == raw_day and fresh.get("name") == name
+            for fresh in parsed
+        ):
+            preserved.append(event)
+
     combined = preserved + parsed
     unique = {}
     for event in combined:

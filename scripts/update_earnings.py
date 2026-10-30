@@ -19,7 +19,7 @@ ROSTER_FILE = ROOT / 'earnings_watchlist.json'
 JST = ZoneInfo('Asia/Tokyo')
 ET = ZoneInfo('America/New_York')
 TODAY = datetime.now(JST).date()
-END = TODAY + timedelta(days=30)
+END = TODAY + timedelta(days=90)
 UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
 NASDAQ_URL = 'https://api.nasdaq.com/api/calendar/earnings?date={}'
 JP_CALENDAR_URL = 'https://www.traders.co.jp/market_jp/earnings_calendar/all/all/1'
@@ -50,7 +50,7 @@ def nasdaq_rows(watch):
     by_ticker = {norm_ticker(c['ticker']): c for c in watch if c['market']=='US'}
     found = {}
     successful_days = 0
-    for offset in range(31):
+    for offset in range(91):
         day = TODAY + timedelta(days=offset)
         url = NASDAQ_URL.format(day.isoformat())
         payload = json.loads(fetch(url))
@@ -76,8 +76,8 @@ def nasdaq_rows(watch):
             name = str(row.get('name') or company['name'])
             found[(ticker, day.isoformat())] = make_row(company, day, label, 'Nasdaq Earnings Calendar', url,
                 f'Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。')
-    if successful_days != 31:
-        raise RuntimeError(f'Nasdaq calendar returned {successful_days}/31 day queries')
+    if successful_days != 91:
+        raise RuntimeError(f'Nasdaq calendar returned {successful_days}/91 day queries')
     return list(found.values())
 
 
@@ -144,7 +144,7 @@ def jp_rows(watch):
             if tm:
                 hh,mm=int(tm.group(1)),int(tm.group(2))
                 if 0<=hh<=23 and 0<=mm<=59: time_label=f'{hh:02d}:{mm:02d}'; break
-        found[matched['ticker']]=make_row(matched,day,time_label,'トレーダーズ・ウェブ 決算発表スケジュール',JP_CALENDAR_URL,
+        found[(matched['ticker'], day.isoformat())]=make_row(matched,day,time_label,'トレーダーズ・ウェブ 決算発表スケジュール',JP_CALENDAR_URL,
           '第三者の決算カレンダー掲載情報。会社側の変更があり得るため、企業公式IRで最終確認してください。')
     # Do not treat a structurally empty/unparseable page as a successful no-results response.
     if not parser.rows or not found:
@@ -163,7 +163,7 @@ def main():
         try:
             rows=fn(watch)
             results[market]=rows
-            print(f'{market}: parsed {len(rows)} watchlist earnings in next 30 days')
+            print(f'{market}: parsed {len(rows)} watchlist earnings in next 90 days')
         except Exception as exc:
             failed.append((market,str(exc)))
             print(f'WARNING {market} earnings source failed: {exc}')
@@ -187,6 +187,18 @@ def main():
         preserved.append(old)
 
     merged = preserved + results.get('JP', []) + results.get('US', [])
+
+    # Confirmed official-IR date previously present in this calendar snapshot.
+    # Keep this explicit fallback until the upstream JP calendar reliably returns it.
+    if TODAY <= date(2026, 11, 10) <= END:
+        sbg = next((c for c in watch if c.get('ticker') == '9984'), None)
+        if sbg:
+            merged.append(make_row(
+                sbg, date(2026, 11, 10), '時刻未定',
+                'ソフトバンクグループ公式IR（補完登録）',
+                'https://group.softbank/ir/',
+                '会社公式IRで確認した決算発表予定日。発表時刻は未確認。'
+            ))
 
     # De-duplicate only identical market/ticker/date combinations. A ticker
     # with two different scheduled dates keeps both entries.
