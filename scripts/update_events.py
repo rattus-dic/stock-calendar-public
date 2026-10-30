@@ -22,7 +22,7 @@ UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like 
 
 SOURCES = {
     "fed": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
-    "boj": "https://www.boj.or.jp/en/about/calendar/index.htm",
+    "boj": "https://www.boj.or.jp/mopo/mpmsche_minu/",
     "bls": "https://www.bls.gov/schedule/news_release/bls.ics",
 }
 
@@ -187,58 +187,137 @@ def parse_bls_fallback():
     return out
 
 
+class BOJMeetingTableParser(HTMLParser):
+    """Extract year-labelled rows from the BOJ official meeting schedule."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.year = None
+        self.in_heading = 0
+        self.in_row = False
+        self.in_cell = False
+        self.cell_parts = []
+        self.cells = []
+        self.rows = []
+
+    def handle_starttag(self, tag, attrs):
+        tag = tag.lower()
+        if tag in ("h1", "h2", "h3", "h4"):
+            self.in_heading += 1
+        elif tag == "tr":
+            self.in_row = True
+            self.cells = []
+        elif tag in ("td", "th") and self.in_row:
+            self.in_cell = True
+            self.cell_parts = []
+
+    def handle_endtag(self, tag):
+        tag = tag.lower()
+        if tag in ("h1", "h2", "h3", "h4") and self.in_heading:
+            self.in_heading -= 1
+        elif tag in ("td", "th") and self.in_cell:
+            self.cells.append(re.sub(r"\s+", " ", "".join(self.cell_parts)).strip())
+            self.in_cell = False
+        elif tag == "tr" and self.in_row:
+            if self.cells:
+                self.rows.append((self.year, self.cells[:]))
+            self.in_row = False
+
+    def handle_data(self, data):
+        value = data.strip()
+        if self.in_cell:
+            self.cell_parts.append(data)
+        elif self.in_heading:
+            match = re.search(r"\b(20\d{2})年\b", value)
+            if match:
+                self.year = int(match.group(1))
+        elif not self.in_row:
+            # Some page revisions put the year label in a caption or lead text.
+            match = re.search(r"\b(20\d{2})年\b", value)
+            if match:
+                self.year = int(match.group(1))
+
+
+def _boj_decision_day(text, year):
+    """Return the last day of a BOJ meeting range such as 10月29日・30日."""
+    month_match = re.search(r"(\d{1,2})月", text)
+    day_matches = re.findall(r"(\d{1,2})日", text)
+    if not month_match or not day_matches:
+        return None
+    month = int(month_match.group(1))
+    day = int(day_matches[-1])
+    try:
+        return date(year, month, day)
+    except ValueError:
+        return None
+
+
+def _boj_outlook_day(text, year):
+    """Parse an Outlook-report publication date, or return None for a dash."""
+    if not text or text.strip() in ("-", "－", "—", "——"):
+        return None
+    month_match = re.search(r"(\d{1,2})月", text)
+    day_match = re.search(r"(\d{1,2})日", text)
+    if not month_match or not day_match:
+        return None
+    try:
+        return date(year, int(month_match.group(1)), int(day_match.group(1)))
+    except ValueError:
+        return None
+
+
 def parse_boj(html):
+    """Read decision dates directly from the BOJ's official year-by-year table.
+
+    Only the policy decision / Outlook Report day is added to the high-impact
+    calendar. Other BOJ statistics and publication items are intentionally
+    excluded. If the official table cannot be interpreted, raise an error so
+    main() preserves the previously saved BOJ events.
+    """
     url = SOURCES["boj"]
-    text = plain(html)
+    parser = BOJMeetingTableParser()
+    parser.feed(html)
+
     out = []
-    # The Bank of Japan's release schedule is updated regularly. Parse date-led rows
-    # conservatively; no event is added unless a recognizable official date/title exists.
-    month_names = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec"
-    pat = re.compile(rf"(?i)\b({month_names})\.?\s+(\d{{1,2}})\s+(?:\([^)]*\)\s*)?([^\n]{{0,180}})")
-    month_map = {m.lower(): i for i,m in enumerate(
-        ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],1)}
-    for m in pat.finditer(text):
-        try:
-            mo = month_map[m.group(1).lower()[:3]]
-            day = date(TODAY.year, mo, int(m.group(2)))
-            if day < TODAY - timedelta(days=7):
-                day = date(TODAY.year + 1, mo, int(m.group(2)))
-            title = re.sub(r"\s+", " ", m.group(3)).strip(" :-|")
-            if not TODAY <= day <= END:
-                continue
-            low = title.lower()
-            if "statement on monetary policy" in low or "outlook for economic activity and prices" in low:
-                name = "日銀金融政策決定会合・展望レポート"
-                detail = "日銀の政策判断・経済物価見通しに注目。時刻は公式発表で確認。"
-                out.append(mk_event(day, name, "日本", detail, url, "日本銀行 公表予定", "時刻未定"))
-            elif "services producer price index" in low:
-                out.append(mk_event(day, "日銀・企業向けサービス価格指数", "日本",
-                    "サービス価格の動向。国内インフレ圧力を確認。", url, "日本銀行 公表予定", "08:50", "高"))
-        except (ValueError, KeyError):
+    for year, cells in parser.rows:
+        if not year or len(cells) < 2:
             continue
-    # Explicit meeting dates from BOJ's official 2026 schedule as fallback.
-    # Check each date independently: otherwise, once the first meeting day has
-    # passed, the enclosing condition would also suppress the still-current
-    # second day (the bug that caused the 2026-10-30 event to disappear).
-    if TODAY.year == 2026:
-        fallback_meetings = [
-            (date(2026, 10, 29), "日銀金融政策決定会合（1日目）",
-             "金融政策・金利見通しに注目。", "時刻未定"),
-            (date(2026, 10, 30), "日銀金融政策決定会合・展望レポート",
-             "政策決定と物価・経済見通しを確認。発表時刻は未定。", "時刻未定"),
-        ]
-        for meeting_day, meeting_name, detail, event_time in fallback_meetings:
-            if TODAY <= meeting_day <= END and not any(
-                e.get("date") == meeting_day.isoformat()
-                and "金融政策決定会合" in e.get("name", "")
-                for e in out
-            ):
-                out.append(mk_event(
-                    meeting_day, meeting_name, "日本", detail,
-                    "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm",
-                    "日本銀行 会合日程（公式日程フォールバック）", event_time
-                ))
-    return out
+        meeting_day = _boj_decision_day(cells[0], year)
+        if meeting_day is None or not TODAY <= meeting_day <= END:
+            continue
+
+        outlook_day = _boj_outlook_day(cells[1], year)
+        # The BOJ table's Outlook basic-view date is the policy decision day
+        # for outlook meetings. Otherwise use the second (final) meeting day.
+        event_day = outlook_day or meeting_day
+        if not TODAY <= event_day <= END:
+            continue
+
+        has_outlook = outlook_day is not None
+        name = ("日銀金融政策決定会合・展望レポート"
+                if has_outlook else "日銀金融政策決定会合")
+        detail = (
+            "日銀の金融政策決定と経済・物価見通しを確認。"
+            if has_outlook else
+            "日銀の金融政策決定内容を確認。"
+        )
+        out.append(mk_event(
+            event_day, name, "日本", detail, url,
+            "日本銀行 金融政策決定会合日程（公式ページ自動取得）",
+            "時刻未定", "最重要"
+        ))
+
+    # A zero-result parse is treated as a source-format failure, not as a
+    # successful empty schedule. This prevents accidental deletion of events.
+    if not out:
+        raise ValueError(
+            "BOJ official meeting table yielded no future events in the 90-day window"
+        )
+
+    unique = {}
+    for event in out:
+        unique[(event["date"], event["name"])] = event
+    return list(unique.values())
+
 
 def main():
     if not DATA.exists():
