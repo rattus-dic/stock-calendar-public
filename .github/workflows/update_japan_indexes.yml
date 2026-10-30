@@ -38,7 +38,7 @@ jobs:
               "nikkei": "^N225",
               "topix": "1306.T",
               # グロース250連動ETN（指数そのものではない）
-              "growth250": "2042.T",
+              "growth250": "2516.T",
           }
 
           result = {}
