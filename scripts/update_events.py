@@ -17,7 +17,7 @@ DATA = ROOT / "events.json"
 JST = ZoneInfo("Asia/Tokyo")
 ET = ZoneInfo("America/New_York")
 TODAY = datetime.now(JST).date()
-END = TODAY + timedelta(days=14)
+END = TODAY + timedelta(days=30)
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 
 SOURCES = {
@@ -25,6 +25,18 @@ SOURCES = {
     "boj": "https://www.boj.or.jp/en/about/calendar/index.htm",
     "bls": "https://www.bls.gov/schedule/news_release/bls.ics",
 }
+
+# Official BLS release dates published in its 2026 annual schedule.
+# Used only when the BLS iCalendar feed cannot be reached or yields no
+# Employment Situation/CPI/PPI entries. Times are Eastern Time.
+BLS_FALLBACK_2026 = [
+    (date(2026, 11, 6), "米国雇用統計", "Employment Situation for October 2026"),
+    (date(2026, 11, 10), "米国CPI（消費者物価指数）", "Consumer Price Index for October 2026"),
+    (date(2026, 11, 13), "米国PPI（生産者物価指数）", "Producer Price Index for October 2026"),
+    (date(2026, 12, 4), "米国雇用統計", "Employment Situation for November 2026"),
+    (date(2026, 12, 10), "米国CPI（消費者物価指数）", "Consumer Price Index for November 2026"),
+    (date(2026, 12, 15), "米国PPI（生産者物価指数）", "Producer Price Index for November 2026"),
+]
 
 def fetch(url):
     req = Request(url, headers={
@@ -155,6 +167,23 @@ def parse_bls(ics_text):
             continue
     return out
 
+def parse_bls_fallback():
+    """Use known dates from BLS's published 2026 annual release schedule."""
+    out = []
+    url = "https://www.bls.gov/schedule/2026/home.htm"
+    for eastern_day, name, title in BLS_FALLBACK_2026:
+        release_jst = datetime.combine(eastern_day, time(8, 30), ET).astimezone(JST)
+        event_day = release_jst.date()
+        if TODAY <= event_day <= END:
+            out.append(mk_event(
+                event_day, name, "米国",
+                f"{title}。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+                url, "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
+                release_jst.strftime("%H:%M")
+            ))
+    return out
+
+
 def parse_boj(html):
     url = SOURCES["boj"]
     text = plain(html)
@@ -183,15 +212,11 @@ def parse_boj(html):
         except (ValueError, KeyError):
             continue
     # Explicit meeting dates from BOJ's official 2026 schedule as fallback.
-    # Check each date independently so that an already-past first meeting day
-    # does not prevent the second day from being added.
     if TODAY.year == 2026 and TODAY <= date(2026,10,29) <= END:
         if not any(e["date"] == "2026-10-29" and "金融政策決定会合" in e["name"] for e in out):
             out.append(mk_event(date(2026,10,29), "日銀金融政策決定会合（1日目）", "日本",
                 "金融政策・金利見通しに注目。", "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm",
                 "日本銀行 会合日程", "時刻未定"))
-
-    if TODAY.year == 2026 and TODAY <= date(2026,10,30) <= END:
         if not any(e["date"] == "2026-10-30" and "金融政策決定会合" in e["name"] for e in out):
             out.append(mk_event(date(2026,10,30), "日銀金融政策決定会合・展望レポート", "日本",
                 "政策決定と物価・経済見通しを確認。発表時刻は未定。",
@@ -210,10 +235,26 @@ def main():
         try:
             payload = fetch(SOURCES[key])
             events = parser(payload)
+            if key == "bls" and not events:
+                # An accessible but empty feed is also suspicious; try the
+                # published annual schedule before declaring a successful zero.
+                events = parse_bls_fallback()
+                print("bls: iCalendar returned 0 target events; used official schedule fallback")
             parsed.extend(events)
             successful.add(key)
             print(f"{key}: parsed {len(events)} candidate events")
         except Exception as exc:
+            if key == "bls":
+                try:
+                    events = parse_bls_fallback()
+                    parsed.extend(events)
+                    successful.add(key)
+                    print(f"bls: primary feed failed ({exc}); official schedule fallback parsed {len(events)} events")
+                    continue
+                except Exception as fallback_exc:
+                    failed.append((key, f"primary: {exc}; fallback: {fallback_exc}"))
+                    print(f"WARNING bls: primary and fallback failed: {exc}; {fallback_exc}")
+                    continue
             failed.append((key, str(exc)))
             print(f"WARNING {key}: {exc}")
 

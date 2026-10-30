@@ -19,7 +19,7 @@ ROSTER_FILE = ROOT / 'earnings_watchlist.json'
 JST = ZoneInfo('Asia/Tokyo')
 ET = ZoneInfo('America/New_York')
 TODAY = datetime.now(JST).date()
-END = TODAY + timedelta(days=14)
+END = TODAY + timedelta(days=30)
 UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
 NASDAQ_URL = 'https://api.nasdaq.com/api/calendar/earnings?date={}'
 JP_CALENDAR_URL = 'https://www.traders.co.jp/market_jp/earnings_calendar/all/all/1'
@@ -50,7 +50,7 @@ def nasdaq_rows(watch):
     by_ticker = {norm_ticker(c['ticker']): c for c in watch if c['market']=='US'}
     found = {}
     successful_days = 0
-    for offset in range(15):
+    for offset in range(31):
         day = TODAY + timedelta(days=offset)
         url = NASDAQ_URL.format(day.isoformat())
         payload = json.loads(fetch(url))
@@ -74,10 +74,10 @@ def nasdaq_rows(watch):
             else:
                 label = '時刻未定'
             name = str(row.get('name') or company['name'])
-            found[ticker] = make_row(company, day, label, 'Nasdaq Earnings Calendar', url,
+            found[(ticker, day.isoformat())] = make_row(company, day, label, 'Nasdaq Earnings Calendar', url,
                 f'Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。')
-    if successful_days != 15:
-        raise RuntimeError('Nasdaq calendar did not return all 15 day queries')
+    if successful_days != 31:
+        raise RuntimeError(f'Nasdaq calendar returned {successful_days}/31 day queries')
     return list(found.values())
 
 
@@ -163,29 +163,60 @@ def main():
         try:
             rows=fn(watch)
             results[market]=rows
-            print(f'{market}: parsed {len(rows)} watchlist earnings in next 14 days')
+            print(f'{market}: parsed {len(rows)} watchlist earnings in next 30 days')
         except Exception as exc:
             failed.append((market,str(exc)))
             print(f'WARNING {market} earnings source failed: {exc}')
     if not results: raise SystemExit('Both earnings sources failed; existing earnings entries preserved.')
-    watch_tickers={c['ticker'] for c in watch}
-    # Replace entries for a market only when that provider succeeded. Preserve non-watchlist entries.
-    preserved=[]
-    for old in data.get('earnings',[]):
-        ticker=str(old.get('ticker') or '')
-        name=str(old.get('name') or '')
-        market='US' if old.get('market')=='米国' or re.search(r'\([A-Z.]{1,6}\)',name) else 'JP'
-        is_watch = ticker in watch_tickers or any(f'({t})' in name or f'（{t}）' in name for t in watch_tickers)
-        if is_watch and market in results: continue
-        # Do not keep expired dated watchlist records for markets refreshed successfully.
+    # Preserve previously registered future/undated entries. This includes
+    # manually curated official-IR dates and "date not yet confirmed" watchlist
+    # placeholders. Merge fresh provider results instead of deleting an entire
+    # market's old records after a successful fetch.
+    preserved = []
+    for old in data.get('earnings', []):
+        raw_date = old.get('date')
+        if raw_date:
+            try:
+                old_day = date.fromisoformat(str(raw_date))
+            except ValueError:
+                # Keep malformed/legacy records rather than silently deleting them.
+                preserved.append(old)
+                continue
+            if old_day < TODAY:
+                continue
         preserved.append(old)
-    merged=preserved+results.get('JP',[])+results.get('US',[])
-    # Unique by market/ticker/date; keep newest record on duplicate keys.
-    unique={}
+
+    merged = preserved + results.get('JP', []) + results.get('US', [])
+
+    # De-duplicate only identical market/ticker/date combinations. A ticker
+    # with two different scheduled dates keeps both entries.
+    unique = {}
     for row in merged:
-        key=(row.get('market'),row.get('ticker') or row.get('name'),row.get('date'))
-        unique[key]=row
-    data['earnings']=sorted(unique.values(),key=lambda r:(r.get('date') or '9999-99-99',r.get('market') or '',r.get('name') or ''))
+        ticker = str(row.get('ticker') or row.get('name') or '')
+        key = (row.get('market'), ticker, row.get('date'))
+        if key not in unique:
+            unique[key] = row
+        else:
+            # Prefer a newly fetched provider row when the same date exists.
+            if row.get('sourceName') in ('Nasdaq Earnings Calendar', 'トレーダーズ・ウェブ 決算発表スケジュール'):
+                unique[key] = row
+
+    merged_rows = list(unique.values())
+
+    # Once a dated record exists for a ticker, its undated placeholder is
+    # redundant; keep placeholders for companies with no known date yet.
+    dated_tickers = {
+        (row.get('market'), str(row.get('ticker') or row.get('name') or ''))
+        for row in merged_rows if row.get('date')
+    }
+    data['earnings'] = sorted(
+        [
+            row for row in merged_rows
+            if row.get('date') or
+            (row.get('market'), str(row.get('ticker') or row.get('name') or '')) not in dated_tickers
+        ],
+        key=lambda r: (r.get('date') or '9999-99-99', r.get('market') or '', r.get('name') or '')
+    )
     data['earningsUpdatedAt']=datetime.now(JST).strftime('%Y-%m-%d %H:%M JST')
     # Keep general updatedAt owned by the macro-events updater; expose separate earnings timestamp.
     DATA.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
