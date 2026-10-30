@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-30 10:03 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-10-30 10:18 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -48,6 +48,126 @@
       "status": "公式日程",
       "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
       "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
+    },
+    {
+      "date": "2026-12-04",
+      "timeJst": "22:30",
+      "market": "米国",
+      "name": "米国雇用統計",
+      "detail": "Employment Situation for November 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
+      "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
+    },
+    {
+      "date": "2026-12-08",
+      "timeJst": "時刻未定",
+      "market": "米国",
+      "name": "FOMC（米連邦公開市場委員会）1日目",
+      "detail": "米国金融政策会合の1日目。政策発表は通常2日目。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "Federal Reserve FOMC Calendar",
+      "sourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+    },
+    {
+      "date": "2026-12-10",
+      "timeJst": "04:00",
+      "market": "米国",
+      "name": "FOMC政策金利・声明発表",
+      "detail": "声明発表は通常、米東部時間14:00。記者会見は通常14:30（日本時間は季節により変動）。公式発表で最終確認。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "Federal Reserve FOMC Calendar",
+      "sourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+    },
+    {
+      "date": "2026-12-10",
+      "timeJst": "22:30",
+      "market": "米国",
+      "name": "米国CPI（消費者物価指数）",
+      "detail": "Consumer Price Index for November 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
+      "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
+    },
+    {
+      "date": "2026-12-15",
+      "timeJst": "22:30",
+      "market": "米国",
+      "name": "米国PPI（生産者物価指数）",
+      "detail": "Producer Price Index for November 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
+      "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
+    },
+    {
+      "date": "2027-01-08",
+      "timeJst": "22:30",
+      "market": "米国",
+      "name": "米国雇用統計",
+      "detail": "Employment Situation for December 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
+      "sourceUrl": "https://www.bls.gov/schedule/2027/home.htm"
+    },
+    {
+      "date": "2027-01-13",
+      "timeJst": "22:30",
+      "market": "米国",
+      "name": "米国CPI（消費者物価指数）",
+      "detail": "Consumer Price Index for December 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
+      "sourceUrl": "https://www.bls.gov/schedule/2027/home.htm"
+    },
+    {
+      "date": "2027-01-14",
+      "timeJst": "22:30",
+      "market": "米国",
+      "name": "米国PPI（生産者物価指数）",
+      "detail": "Producer Price Index for December 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
+      "sourceUrl": "https://www.bls.gov/schedule/2027/home.htm"
+    },
+    {
+      "date": "2027-01-26",
+      "timeJst": "時刻未定",
+      "market": "米国",
+      "name": "FOMC（米連邦公開市場委員会）1日目",
+      "detail": "米国金融政策会合の1日目。政策発表は通常2日目。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "Federal Reserve FOMC Calendar",
+      "sourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+    },
+    {
+      "date": "2027-01-28",
+      "timeJst": "04:00",
+      "market": "米国",
+      "name": "FOMC政策金利・声明発表",
+      "detail": "声明発表は通常、米東部時間14:00。記者会見は通常14:30（日本時間は季節により変動）。公式発表で最終確認。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "Federal Reserve FOMC Calendar",
+      "sourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
     }
   ],
   "earnings": [
@@ -220,6 +340,18 @@
       "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-06"
     },
     {
+      "date": "2026-11-10",
+      "timeJst": "時刻未定",
+      "market": "日本",
+      "name": "ソフトバンクグループ（9984）",
+      "ticker": "9984",
+      "detail": "会社公式IRで確認した決算発表予定日。発表時刻は未確認。",
+      "confirmed": true,
+      "status": "予定日取得済み",
+      "sourceName": "ソフトバンクグループ公式IR（補完登録）",
+      "sourceUrl": "https://group.softbank/ir/"
+    },
+    {
       "date": "2026-11-18",
       "timeJst": "時刻未定",
       "market": "米国",
@@ -242,7 +374,67 @@
       "status": "予定日取得済み",
       "sourceName": "Nasdaq Earnings Calendar",
       "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-19"
+    },
+    {
+      "date": "2026-12-02",
+      "timeJst": "時刻未定",
+      "market": "米国",
+      "name": "Salesforce（CRM）",
+      "ticker": "CRM",
+      "detail": "Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。",
+      "confirmed": true,
+      "status": "予定日取得済み",
+      "sourceName": "Nasdaq Earnings Calendar",
+      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-12-02"
+    },
+    {
+      "date": "2026-12-09",
+      "timeJst": "時刻未定",
+      "market": "米国",
+      "name": "Oracle（ORCL）",
+      "ticker": "ORCL",
+      "detail": "Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。",
+      "confirmed": true,
+      "status": "予定日取得済み",
+      "sourceName": "Nasdaq Earnings Calendar",
+      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-12-09"
+    },
+    {
+      "date": "2026-12-10",
+      "timeJst": "時刻未定",
+      "market": "米国",
+      "name": "Broadcom（AVGO）",
+      "ticker": "AVGO",
+      "detail": "Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。",
+      "confirmed": true,
+      "status": "予定日取得済み",
+      "sourceName": "Nasdaq Earnings Calendar",
+      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-12-10"
+    },
+    {
+      "date": "2026-12-10",
+      "timeJst": "時刻未定",
+      "market": "米国",
+      "name": "Costco Wholesale（COST）",
+      "ticker": "COST",
+      "detail": "Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。",
+      "confirmed": true,
+      "status": "予定日取得済み",
+      "sourceName": "Nasdaq Earnings Calendar",
+      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-12-10"
+    },
+    {
+      "date": "2026-12-16",
+      "timeJst": "時刻未定",
+      "market": "米国",
+      "name": "Micron Technology（MU）",
+      "ticker": "MU",
+      "detail": "Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。",
+      "confirmed": true,
+      "status": "予定日取得済み",
+      "sourceName": "Nasdaq Earnings Calendar",
+      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-12-16"
     }
   ],
-  "earningsUpdatedAt": "2026-10-30 10:05 JST"
+  "earningsUpdatedAt": "2026-10-30 10:21 JST"
 }
