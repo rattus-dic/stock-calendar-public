@@ -228,7 +228,7 @@ select{flex:1;min-width:0}
   <div class="toolbar">
 <select id="index" aria-label="指数">
 <option value="nikkei">日経平均</option>
-<option value="topix">TOPIX連動ETF</option>
+<option value="topix">TOPIX連動ETF（1306）</option>
 <option value="growth250">グロース250連動ETF（2516）</option>
 <option value="nasdaq">NASDAQ総合</option>
 <option value="sox">SOX（半導体株指数）</option>
@@ -430,7 +430,7 @@ let prices = {};
 let index = 'nikkei';
 
 const fmt = n => Math.abs(n).toLocaleString('ja-JP');
-const indexNames = { nikkei: '日経平均', topix: 'TOPIX連動ETF', nasdaq: 'NASDAQ総合', growth250: 'グロース250連動ETF（2516）', sox: 'SOX（半導体株指数）' };
+const indexNames = { nikkei: '日経平均', topix: 'TOPIX連動ETF（1306）', nasdaq: 'NASDAQ総合', growth250: 'グロース250連動ETF（2516）', sox: 'SOX（半導体株指数）' };
 const indexUnits = { nikkei: '円', topix: '円', nasdaq: 'pt', growth250: '円', sox: 'pt' };
 let indicators = {};
 let indicatorHistory = {};
