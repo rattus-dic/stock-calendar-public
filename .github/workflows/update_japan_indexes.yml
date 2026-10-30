@@ -36,7 +36,7 @@ jobs:
 
           symbols = {
               "nikkei": "^N225",
-              "topix": "1306.T",
+              "topix": "998405.T",
               # グロース250連動ETN（指数そのものではない）
               "growth250": "2042.T",
           }
@@ -73,7 +73,7 @@ jobs:
                   }
                   previous = value
 
-              # Yahoo chart history can lag the latest quote for ^N225 and 1306.T.
+              # Yahoo chart history can lag the latest quote for ^N225 and 998405.T.
               # If the daily series is behind, inspect Yahoo's quote timestamp and
               # only append the quote when it is dated after the latest daily bar
               # and the timestamp is at/after the Tokyo market close.
