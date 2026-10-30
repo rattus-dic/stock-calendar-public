@@ -6,7 +6,8 @@ JP: Traders Web calendar (all available pagination pages) plus Matsui Securities
     schedule page as a secondary cross-check when its public HTML is accessible.
 
 The script never treats an empty result from one source as proof that no dates
-exist. Existing future/manual records are preserved. Source failures are logged.
+exist. It refreshes changed dates, avoids stale duplicate future dates, preserves
+past history and manual/official records, and labels unknown next dates clearly.
 """
 import json
 import re
@@ -264,71 +265,129 @@ def nasdaq_rows(watch):
     return list(found.values())
 
 
-def merge_rows(old_rows, fresh_rows, watch):
-    """Keep old future/manual entries, replace duplicates with higher-priority fresh rows."""
-    watch_keys = {(c["market"], str(c["ticker"])) for c in watch}
-    merged = {}
+def merge_rows(old_rows, fresh_rows, watch, successful_sources):
+    """Refresh provider dates without retaining superseded dates.
+
+    - Old dates from a provider are replaced when that same provider returns a
+      fresh record for the same ticker.
+    - If any provider returns a fresh date for a ticker, older third-party
+      calendar dates for that ticker are removed to avoid stale duplicates.
+    - Manual/official-IR entries are preserved unless a fresh provider record
+      is for the same ticker and date; official records retain higher priority.
+    - Past dated rows are retained as history.
+    """
+    provider_names = {
+        "Nasdaq Earnings Calendar",
+        "松井証券 決算発表スケジュール",
+        "トレーダーズ・ウェブ 決算発表スケジュール",
+    }
     priority = {
         "Nasdaq Earnings Calendar": 30,
-        "松井証券 決算発表スケジュール": 20,
-        "トレーダーズ・ウェブ 決算発表スケジュール": 10,
-        "ソフトバンクグループ公式IR（補完登録）": 40,
+        "トレーダーズ・ウェブ 決算発表スケジュール": 20,
+        "松井証券 決算発表スケジュール": 25,
+        "ソフトバンクグループ公式IR（補完登録）": 100,
     }
 
-    def key(row):
-        market = row.get("market")
-        ticker = str(row.get("ticker") or row.get("name") or "")
-        return market, ticker, row.get("date") or ""
+    def ticker_key(row):
+        return (row.get("market"), str(row.get("ticker") or ""))
 
-    for row in old_rows:
-        raw_date = row.get("date")
+    def row_key(row):
+        return (*ticker_key(row), row.get("date") or "")
+
+    fresh_by_ticker = {}
+    for row in fresh_rows:
+        fresh_by_ticker.setdefault(ticker_key(row), []).append(row)
+
+    # Keep historical rows, manual/official records, and unknown placeholders.
+    kept = []
+    for old in old_rows:
+        raw_date = old.get("date")
         if raw_date:
             try:
-                if date.fromisoformat(str(raw_date)) < TODAY:
-                    # Keep historical rows for watched companies, too.
-                    pass
+                old_day = date.fromisoformat(str(raw_date))
             except ValueError:
-                pass
-        k = key(row)
-        merged[k] = row
+                kept.append(old)
+                continue
+            if old_day < TODAY:
+                kept.append(old)
+                continue
 
+        old_source = old.get("sourceName")
+        key = ticker_key(old)
+
+        # A new result for this ticker supersedes stale calendar-derived future
+        # dates from any provider. This prevents old/new date double entries.
+        if old_source in provider_names and key in fresh_by_ticker:
+            continue
+
+        # If this provider was successfully refreshed but no matching result
+        # exists, preserve the old row: absence is not proof of cancellation.
+        kept.append(old)
+
+    merged = {}
+    for row in kept + fresh_rows:
+        key = row_key(row)
+        previous = merged.get(key)
+        if previous is None or priority.get(row.get("sourceName"), 0) > priority.get(previous.get("sourceName"), 0):
+            merged[key] = row
+
+    # If multiple fresh sources disagree on the date for one ticker, keep the
+    # higher-priority source's date and report the disagreement in the log.
+    selected = {}
     for row in fresh_rows:
-        k = key(row)
-        previous = merged.get(k)
-        if previous is None or priority.get(row.get("sourceName"), 0) >= priority.get(previous.get("sourceName"), 0):
-            merged[k] = row
+        key = ticker_key(row)
+        current = selected.get(key)
+        if current is None or priority.get(row.get("sourceName"), 0) > priority.get(current.get("sourceName"), 0):
+            if current and current.get("date") != row.get("date"):
+                print(f'WARNING date disagreement {key}: {current.get("date")} ({current.get("sourceName")}) vs {row.get("date")} ({row.get("sourceName")}); using higher-priority source')
+            selected[key] = row
+        elif current.get("date") != row.get("date"):
+            print(f'WARNING date disagreement {key}: {current.get("date")} ({current.get("sourceName")}) vs {row.get("date")} ({row.get("sourceName")}); keeping higher-priority source')
 
-    # Keep a single undated "日程未確認" placeholder only for watchlist tickers
-    # without any dated event in the calendar. Do not invent a date.
-    dated = {(r.get("market"), str(r.get("ticker") or "")) for r in merged.values() if r.get("date")}
-    result = []
+    # Remove all provider-sourced future rows for tickers with a fresh result,
+    # then add only the selected fresh date for that ticker.
+    fresh_keys = set(selected)
+    final_rows = []
     for row in merged.values():
-        ticker = str(row.get("ticker") or "")
-        market = row.get("market")
-        if row.get("date"):
-            result.append(row)
-        elif (market, ticker) not in dated:
-            result.append(row)
+        if row.get("sourceName") in provider_names and ticker_key(row) in fresh_keys:
+            continue
+        final_rows.append(row)
+    final_rows.extend(selected.values())
 
-    # Add explicit status placeholders for watchlist companies with no known date.
-    existing_placeholders = {(r.get("market"), str(r.get("ticker") or "")) for r in result if not r.get("date")}
+    # Preserve existing placeholders. Add a placeholder for every watchlist
+    # company without a dated event. The status wording explicitly means
+    # "next date not found in the checked sources", not "company has not
+    # announced a date".
+    dated = {ticker_key(r) for r in final_rows if r.get("date")}
+    placeholders = {ticker_key(r) for r in final_rows if not r.get("date")}
     for company in watch:
         market = "日本" if company["market"] == "JP" else "米国"
-        k = (market, str(company["ticker"]))
-        if k not in dated and k not in existing_placeholders:
-            result.append({
-                "date": None,
-                "timeJst": "未定",
-                "market": market,
-                "name": f'{company["name"]}（{company["ticker"]}）',
-                "ticker": company["ticker"],
-                "detail": "公開カレンダーで今後90日以内の日程を確認できていません。未発表とは限りません。",
-                "confirmed": False,
-                "status": "日程未確認",
-                "sourceName": "自動照合",
-                "sourceUrl": company.get("irUrl", ""),
-            })
-    return sorted(result, key=lambda r: (r.get("date") or "9999-99-99", r.get("market") or "", r.get("name") or ""))
+        key = (market, str(company["ticker"]))
+        if key in dated or key in placeholders:
+            continue
+        final_rows.append({
+            "date": None,
+            "timeJst": "未定",
+            "market": market,
+            "name": f'{company["name"]}（{company["ticker"]}）',
+            "ticker": company["ticker"],
+            "detail": "確認した公開カレンダーでは次回日程を確認できていません。未発表とは限りません。前回決算発表日が分かる場合は履歴欄に保持します。",
+            "confirmed": False,
+            "status": "次回日程未確認",
+            "sourceName": "自動照合",
+            "sourceUrl": company.get("irUrl", ""),
+        })
+
+    # Make placeholder wording consistent for existing null-date watchlist rows.
+    for row in final_rows:
+        if not row.get("date") and row.get("ticker"):
+            row["status"] = "次回日程未確認"
+            row["confirmed"] = False
+
+    return sorted(
+        final_rows,
+        key=lambda r: (r.get("date") or "9999-99-99", r.get("market") or "", r.get("name") or "")
+    )
 
 
 def main():
@@ -341,6 +400,7 @@ def main():
 
     fresh = []
     failed = []
+    successful_sources = set()
     for market, sources in (
         ("JP", [("Traders Web", traders_rows), ("Matsui", matsui_rows)]),
         ("US", [("Nasdaq", nasdaq_rows)]),
@@ -351,6 +411,7 @@ def main():
                 result = fn(watch)
                 rows = result[0] if isinstance(result, tuple) else result
                 fresh.extend(rows)
+                successful_sources.add({"Traders Web": "トレーダーズ・ウェブ 決算発表スケジュール", "Matsui": "松井証券 決算発表スケジュール", "Nasdaq": "Nasdaq Earnings Calendar"}[label])
                 successes += 1
                 if label == "Traders Web":
                     print(f"JP Traders Web: {len(rows)} matched; pages checked: {result[1]}")
@@ -372,7 +433,7 @@ def main():
             "会社公式IRで確認した決算発表予定日。発表時刻は未確認。"
         ))
 
-    data["earnings"] = merge_rows(data.get("earnings", []), fresh, watch)
+    data["earnings"] = merge_rows(data.get("earnings", []), fresh, watch, successful_sources)
     data["earningsUpdatedAt"] = datetime.now(JST).strftime("%Y-%m-%d %H:%M JST")
     DATA.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
