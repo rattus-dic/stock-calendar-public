@@ -26,21 +26,6 @@ SOURCES = {
     "bls": "https://www.bls.gov/schedule/news_release/bls.ics",
 }
 
-# Official BLS release dates published in its 2026 annual schedule.
-# Used only when the BLS iCalendar feed cannot be reached or yields no
-# Employment Situation/CPI/PPI entries. Times are Eastern Time.
-BLS_FALLBACK_2026 = [
-    (date(2026, 11, 6), "米国雇用統計", "Employment Situation for October 2026"),
-    (date(2026, 11, 10), "米国CPI（消費者物価指数）", "Consumer Price Index for October 2026"),
-    (date(2026, 11, 13), "米国PPI（生産者物価指数）", "Producer Price Index for October 2026"),
-    (date(2026, 12, 4), "米国雇用統計", "Employment Situation for November 2026"),
-    (date(2026, 12, 10), "米国CPI（消費者物価指数）", "Consumer Price Index for November 2026"),
-    (date(2026, 12, 15), "米国PPI（生産者物価指数）", "Producer Price Index for November 2026"),
-    (date(2027, 1, 8), "米国雇用統計", "Employment Situation for December 2026"),
-    (date(2027, 1, 13), "米国CPI（消費者物価指数）", "Consumer Price Index for December 2026"),
-    (date(2027, 1, 14), "米国PPI（生産者物価指数）", "Producer Price Index for December 2026"),
-]
-
 def fetch(url):
     req = Request(url, headers={
         "User-Agent": UA,
@@ -170,21 +155,123 @@ def parse_bls(ics_text):
             continue
     return out
 
+class BLSAnnualScheduleParser(HTMLParser):
+    """Extract Date / Time / Release cells from BLS official schedule tables."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.in_row = False
+        self.in_cell = False
+        self.cell_parts = []
+        self.cells = []
+        self.rows = []
+
+    def handle_starttag(self, tag, attrs):
+        tag = tag.lower()
+        if tag == "tr":
+            self.in_row = True
+            self.cells = []
+        elif tag in ("td", "th") and self.in_row:
+            self.in_cell = True
+            self.cell_parts = []
+
+    def handle_endtag(self, tag):
+        tag = tag.lower()
+        if tag in ("td", "th") and self.in_cell:
+            value = re.sub(r"\s+", " ", "".join(self.cell_parts)).strip()
+            self.cells.append(value)
+            self.in_cell = False
+        elif tag == "tr" and self.in_row:
+            if self.cells:
+                self.rows.append(self.cells[:])
+            self.in_row = False
+
+    def handle_data(self, data):
+        if self.in_cell:
+            self.cell_parts.append(data)
+
+
 def parse_bls_fallback():
-    """Use known dates from BLS's published 2026 annual release schedule."""
+    """Automatically parse BLS's official annual release schedule pages.
+
+    Every run fetches the current and next calendar-year pages from bls.gov.
+    Only Employment Situation, CPI and PPI are retained. BLS publishes times
+    in Eastern Time, which are converted to Japan time for the calendar.
+    """
     out = []
-    for eastern_day, name, title in BLS_FALLBACK_2026:
-        url = f"https://www.bls.gov/schedule/{eastern_day.year}/home.htm"
-        release_jst = datetime.combine(eastern_day, time(8, 30), ET).astimezone(JST)
-        event_day = release_jst.date()
-        if TODAY <= event_day <= END:
+    seen = set()
+
+    for year in (TODAY.year, TODAY.year + 1):
+        schedule_url = f"https://www.bls.gov/schedule/{year}/home.htm"
+        try:
+            html = fetch(schedule_url)
+        except Exception as exc:
+            print(f"bls: official annual schedule {year} unavailable: {exc}")
+            continue
+        parser = BLSAnnualScheduleParser()
+        parser.feed(html)
+
+        for cells in parser.rows:
+            if len(cells) < 3:
+                continue
+            date_text, time_text, title = cells[0], cells[1], cells[2]
+            title_lower = title.lower()
+
+            if "employment situation" in title_lower:
+                name = "米国雇用統計"
+            elif "consumer price index" in title_lower:
+                name = "米国CPI（消費者物価指数）"
+            elif "producer price index" in title_lower:
+                name = "米国PPI（生産者物価指数）"
+            else:
+                continue
+
+            date_match = re.search(
+                r"(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+"
+                r"([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})",
+                date_text,
+                re.IGNORECASE,
+            )
+            time_match = re.search(r"(\d{1,2}):(\d{2})\s*(AM|PM)", time_text, re.IGNORECASE)
+            if not date_match or not time_match:
+                continue
+
+            month_text, day_text, year_text = date_match.groups()
+            hour_text, minute_text, ampm = time_match.groups()
+            try:
+                month = datetime.strptime(month_text, "%B").month
+                hour = int(hour_text) % 12
+                if ampm.upper() == "PM":
+                    hour += 12
+                eastern_dt = datetime(
+                    int(year_text), month, int(day_text), hour, int(minute_text), tzinfo=ET
+                )
+                release_jst = eastern_dt.astimezone(JST)
+            except (ValueError, TypeError):
+                continue
+
+            event_day = release_jst.date()
+            if not TODAY <= event_day <= END:
+                continue
+
+            unique_key = (event_day.isoformat(), name)
+            if unique_key in seen:
+                continue
+            seen.add(unique_key)
+
             out.append(mk_event(
                 event_day, name, "米国",
-                f"{title}。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
-                url, "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
+                f"{title}。BLS公式年間スケジュールから自動取得。米金利・ドル円・株式市場の反応に注目。",
+                schedule_url,
+                "U.S. Bureau of Labor Statistics（公式年間スケジュール・自動取得）",
                 release_jst.strftime("%H:%M")
             ))
-    return out
+
+    if not out:
+        raise ValueError(
+            "BLS official annual schedule pages were fetched, but no Employment Situation/CPI/PPI "
+            "releases were parsed in the 90-day window"
+        )
+    return sorted(out, key=lambda event: (event["date"], event.get("timeJst", "")))
 
 
 class BOJMeetingTableParser(HTMLParser):
@@ -337,7 +424,7 @@ def main():
                 # published annual schedule before declaring a successful zero.
                 events = parse_bls_fallback()
                 fallback_sources.add(key)
-                print(f"bls: iCalendar returned 0 target events; official annual schedule fallback parsed {len(events)} events")
+                print(f"bls: iCalendar returned 0 target events; official annual schedule auto-parsed {len(events)} events")
             parsed.extend(events)
             successful.add(key)
             print(f"{key}: parsed {len(events)} candidate events")
@@ -348,7 +435,7 @@ def main():
                     parsed.extend(events)
                     successful.add(key)
                     fallback_sources.add(key)
-                    print(f"bls: primary feed failed ({exc}); official schedule fallback parsed {len(events)} events")
+                    print(f"bls: primary feed failed ({exc}); official annual schedule auto-parsed {len(events)} events")
                     continue
                 except Exception as fallback_exc:
                     failed.append((key, f"primary: {exc}; fallback: {fallback_exc}"))
@@ -410,7 +497,7 @@ def main():
     if failed:
         print("PARTIAL UPDATE: these sources failed; their existing events were preserved: " + "; ".join(f"{k}: {err}" for k, err in failed))
     elif fallback_sources:
-        print("Official data updated with fallback for: " + ", ".join(sorted(fallback_sources)))
+        print("Official data updated with automatic annual-schedule parsing for: " + ", ".join(sorted(fallback_sources)))
     else:
         print("All official primary feeds refreshed successfully.")
 
