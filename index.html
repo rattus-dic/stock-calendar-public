@@ -69,14 +69,36 @@ select{flex:1;min-width:0}
 .indicator-history{margin-top:18px;padding-top:15px;border-top:1px solid var(--line)}
 .subsection-heading{font-size:16px;line-height:1.4;margin:0 0 10px}
 
+
+/* Final layout refinements */
+.site-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px}
+.site-header h1{font-size:30px;line-height:1.2;font-weight:850}
+.header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.header-actions .muted{white-space:nowrap}
+#refresh.refresh-button{background:#245b91;border-color:#397bb8;color:#fff;font-weight:800;box-shadow:0 2px 8px rgba(36,91,145,.28);white-space:nowrap}
+#refresh.refresh-button:active{background:#19446f;transform:translateY(1px)}
+.toolbar{margin-bottom:14px}
+.performance-summary-panel{display:flex;flex-direction:column;gap:0}
+.performance-summary-panel h3{font-size:18px;margin:0 0 12px}
+.detail-section{padding:0 0 18px}
+.summary-section,.performance-section{border-top:1px solid var(--line);padding:18px 0 0;margin-top:18px}
+.summary-section .note{margin-bottom:0}
+.event-caption{margin:2px 0 8px;line-height:1.35}
+@media(max-width:430px){
+  .site-header h1{font-size:30px}
+  .header-actions{gap:7px}
+  #refresh.refresh-button{padding:8px 9px;font-size:14px}
+}
+
 </style>
 </head>
 <body>
 <main>
-<header><h1>📈 株価カレンダー</h1><span class="muted">β版</span></header>
+<header class="site-header"><h1>📈 株価カレンダー</h1><div class="header-actions"><span class="muted">β版</span><button id="refresh" class="refresh-button" type="button">↻ 更新</button></div></header>
 
 <section class="panel" id="eventsPanel" aria-labelledby="eventsHeading" style="margin-bottom:18px">
   <h2 id="eventsHeading" style="font-size:19px;margin:0 0 6px">🗓️ 重要イベント・決算</h2>
+  <p class="note event-caption">イベントと決算は直近2週間分を表示しています。</p>
   <p class="note event-caption" id="eventsUpdated">イベント・決算情報を読み込み中…</p>
   <div class="event-grid">
     <div>
@@ -100,8 +122,7 @@ select{flex:1;min-width:0}
 <option value="nasdaq">NASDAQ総合</option>
 <option value="sox">SOX（半導体株指数）</option>
 </select>
-<button id="refresh" class="refresh-button">↻ 更新</button>
-  </div>
+</div>
 <div class="monthbar">
 <button id="prev">‹ 前月</button>
 <div id="month"></div>
@@ -112,33 +133,35 @@ select{flex:1;min-width:0}
 </div>
 <div id="calendar" class="calendar"></div>
 <div class="legend"><span>🟢 上昇</span><span>🔴 下落</span><span style="color:#a9d9ff">🔵 休場</span><span style="color:#ffd18a">🟠 データ未取得</span></div>
-<section class="panel" id="detail">
-<div class="muted">日付を選択してください</div>
-<div class="note">株価データの接続準備中です。</div>
-</section>
-<section class="panel">
-<h3 style="margin-top:0">月間のまとめ</h3>
-<div class="metrics">
-<div class="metric"><span class="muted">登録日数</span><strong id="count">0日</strong></div>
-<div class="metric"><span class="muted">上昇 / 下落</span><strong id="days">— / —</strong></div>
-</div>
-<p class="note" id="status">株価データ：未接続</p>
-</section>
-<section class="panel" id="performance">
-  <h3 style="margin-top:0">期間別パフォーマンス</h3>
-  <p class="note" id="performanceDate">比較対象を計算中…</p>
-  <div class="metrics">
-    <div class="metric">
-      <span class="muted" id="monthLabel">月初来<br>（前月末比）</span>
-      <strong id="monthChangeValue">—</strong>
-      <span class="note" id="monthBaseValue">（基準 —）</span>
+<section class="panel performance-summary-panel" aria-label="株価詳細とパフォーマンス">
+  <section id="detail" class="detail-section">
+    <div class="muted">日付を選択してください</div>
+    <div class="note">株価データの接続準備中です。</div>
+  </section>
+  <section class="summary-section">
+    <h3>月間のまとめ</h3>
+    <div class="metrics">
+      <div class="metric"><span class="muted">登録日数</span><strong id="count">0日</strong></div>
+      <div class="metric"><span class="muted">上昇 / 下落</span><strong id="days">— / —</strong></div>
     </div>
-    <div class="metric">
-      <span class="muted" id="yearLabel">年初来<br>（前年末比）</span>
-      <strong id="yearChangeValue">—</strong>
-      <span class="note" id="yearBaseValue">（基準 —）</span>
+    <p class="note" id="status">株価データ：未接続</p>
+  </section>
+  <section id="performance" class="performance-section">
+    <h3>期間別パフォーマンス</h3>
+    <p class="note" id="performanceDate">比較対象を計算中…</p>
+    <div class="metrics">
+      <div class="metric">
+        <span class="muted" id="monthLabel">月初来<br>（前月末比）</span>
+        <strong id="monthChangeValue">—</strong>
+        <span class="note" id="monthBaseValue">（基準 —）</span>
+      </div>
+      <div class="metric">
+        <span class="muted" id="yearLabel">年初来<br>（前年末比）</span>
+        <strong id="yearChangeValue">—</strong>
+        <span class="note" id="yearBaseValue">（基準 —）</span>
+      </div>
     </div>
-  </div>
+  </section>
 </section>
 </section>
 
@@ -645,7 +668,7 @@ $('next').onclick = () => {
   render();
 };
 $('index').onchange = e => { index = e.target.value; selectLatestAvailableDate(); render(); };
-$('refresh').onclick = () => { loadPrices(); loadIndicatorHistory(); loadEvents(); };
+$('refresh').onclick = () => { window.location.reload(); };
 $('historyMetric').onchange = renderIndicatorHistory;
 $('historyRange').onchange = renderIndicatorHistory;
 
