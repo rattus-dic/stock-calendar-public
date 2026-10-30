@@ -217,15 +217,27 @@ def parse_boj(html):
         except (ValueError, KeyError):
             continue
     # Explicit meeting dates from BOJ's official 2026 schedule as fallback.
-    if TODAY.year == 2026 and TODAY <= date(2026,10,29) <= END:
-        if not any(e["date"] == "2026-10-29" and "金融政策決定会合" in e["name"] for e in out):
-            out.append(mk_event(date(2026,10,29), "日銀金融政策決定会合（1日目）", "日本",
-                "金融政策・金利見通しに注目。", "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm",
-                "日本銀行 会合日程", "時刻未定"))
-        if not any(e["date"] == "2026-10-30" and "金融政策決定会合" in e["name"] for e in out):
-            out.append(mk_event(date(2026,10,30), "日銀金融政策決定会合・展望レポート", "日本",
-                "政策決定と物価・経済見通しを確認。発表時刻は未定。",
-                "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm", "日本銀行 会合日程", "時刻未定"))
+    # Check each date independently: otherwise, once the first meeting day has
+    # passed, the enclosing condition would also suppress the still-current
+    # second day (the bug that caused the 2026-10-30 event to disappear).
+    if TODAY.year == 2026:
+        fallback_meetings = [
+            (date(2026, 10, 29), "日銀金融政策決定会合（1日目）",
+             "金融政策・金利見通しに注目。", "時刻未定"),
+            (date(2026, 10, 30), "日銀金融政策決定会合・展望レポート",
+             "政策決定と物価・経済見通しを確認。発表時刻は未定。", "時刻未定"),
+        ]
+        for meeting_day, meeting_name, detail, event_time in fallback_meetings:
+            if TODAY <= meeting_day <= END and not any(
+                e.get("date") == meeting_day.isoformat()
+                and "金融政策決定会合" in e.get("name", "")
+                for e in out
+            ):
+                out.append(mk_event(
+                    meeting_day, meeting_name, "日本", detail,
+                    "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm",
+                    "日本銀行 会合日程（公式日程フォールバック）", event_time
+                ))
     return out
 
 def main():
