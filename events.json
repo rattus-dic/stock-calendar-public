@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-30 09:37 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-10-30 10:03 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -14,16 +14,40 @@
       "sourceUrl": "https://www.boj.or.jp/about/calendar/"
     },
     {
-      "date": "2026-10-30",
-      "timeJst": "時刻未定",
-      "market": "日本",
-      "name": "日銀金融政策決定会合・展望レポート",
-      "detail": "政策決定と物価・経済見通しを確認。発表時刻は未定。",
+      "date": "2026-11-06",
+      "timeJst": "22:30",
+      "market": "米国",
+      "name": "米国雇用統計",
+      "detail": "Employment Situation for October 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
       "importance": "最重要",
       "confirmed": true,
       "status": "公式日程",
-      "sourceName": "日本銀行 会合日程",
-      "sourceUrl": "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm"
+      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
+      "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
+    },
+    {
+      "date": "2026-11-10",
+      "timeJst": "22:30",
+      "market": "米国",
+      "name": "米国CPI（消費者物価指数）",
+      "detail": "Consumer Price Index for October 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
+      "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
+    },
+    {
+      "date": "2026-11-13",
+      "timeJst": "22:30",
+      "market": "米国",
+      "name": "米国PPI（生産者物価指数）",
+      "detail": "Producer Price Index for October 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
+      "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
     }
   ],
   "earnings": [
@@ -194,7 +218,31 @@
       "status": "予定日取得済み",
       "sourceName": "Nasdaq Earnings Calendar",
       "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-06"
+    },
+    {
+      "date": "2026-11-18",
+      "timeJst": "時刻未定",
+      "market": "米国",
+      "name": "NVIDIA（NVDA）",
+      "ticker": "NVDA",
+      "detail": "Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。",
+      "confirmed": true,
+      "status": "予定日取得済み",
+      "sourceName": "Nasdaq Earnings Calendar",
+      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-18"
+    },
+    {
+      "date": "2026-11-19",
+      "timeJst": "時刻未定",
+      "market": "米国",
+      "name": "Walmart（WMT）",
+      "ticker": "WMT",
+      "detail": "Nasdaqの決算カレンダーに掲載。時刻ラベルは市場セッション区分で、正確な発表時刻ではありません。企業公式IRで最終確認してください。",
+      "confirmed": true,
+      "status": "予定日取得済み",
+      "sourceName": "Nasdaq Earnings Calendar",
+      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-19"
     }
   ],
-  "earningsUpdatedAt": "2026-10-30 09:38 JST"
+  "earningsUpdatedAt": "2026-10-30 10:05 JST"
 }
