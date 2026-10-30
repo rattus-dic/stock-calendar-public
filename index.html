@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>株価カレンダー</title>
+<style>
+:root{color-scheme:dark;--bg:#171717;--card:#242424;--line:#353535;--text:#f5f5f5;--muted:#aaa;--green:#24563d;--red:#703535;--accent:#65a9ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,sans-serif}
+main{max-width:850px;margin:auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:18px}
+h1{font-size:22px;margin:0}
+button,select{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px;font:inherit}
+button{cursor:pointer}
+.toolbar{display:flex;gap:8px;margin-bottom:14px}
+select{flex:1;min-width:0}
+.monthbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+#month{font-size:19px;font-weight:750;text-align:center}
+.weekdays,.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.weekdays div{text-align:center;color:var(--muted);font-size:12px;padding:8px 0}
+.day{min-width:0;min-height:94px;padding:6px 3px;background:var(--card);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.day.up{background:var(--green)}
+.day.down{background:var(--red)}
+.day.selected{outline:2px solid var(--accent)}
+.day.empty{background:transparent;border-color:transparent}
+.date{font-size:11px;color:#ddd}
+.close{font-size:clamp(10px,2.4vw,15px);font-weight:750;white-space:nowrap}
+.change,.pct{font-size:clamp(9px,2vw,12px);white-space:nowrap}
+.uptext{color:#91efb4}.downtext{color:#ffaaaa}
+.muted{color:var(--muted)}
+.day-status{font-size:13px;line-height:1.2;font-weight:800;white-space:nowrap}
+.holiday-text{color:#a9d9ff}.missing-text{color:#ffd18a}
+.legend{display:flex;justify-content:center;gap:16px;margin:14px 0;color:var(--muted);font-size:12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px;margin-top:14px}
+.big{font-size:28px;font-weight:800;margin:5px 0}
+.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.metric{background:#303030;padding:12px;border-radius:10px}
+.metric strong{display:block;font-size:20px;margin-top:5px}.metric strong.indicator-value{font-size:23px}.indicator-value .metric-number{font-size:1em}.indicator-value .unit-small{font-size:11px;font-weight:700;white-space:nowrap;display:inline;vertical-align:baseline}.positive{color:#91efb4}.negative{color:#ffaaaa}.neutral{color:var(--muted)}
+.note{font-size:12px;line-height:1.7;color:var(--muted)}
+@media(max-width:430px){main{padding:9px}.day{min-height:76px;padding:4px 2px;gap:4px}.monthbar button{padding:8px 5px;font-size:12px}h1{font-size:19px}}
+
+.event-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.event-list{display:flex;flex-direction:column;gap:8px}
+.event-item{padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:#2b2b2b}.event-item .event-meta{display:none}.event-item.expanded .event-meta{display:block}.event-item .event-title{font-size:13px}.event-list{gap:6px}.event-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}.event-toggle{background:#333;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px}.event-count{font-size:11px;color:var(--muted)}
+.event-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.event-date{font-size:12px;color:#b8d7ff;white-space:nowrap}
+.event-title{font-weight:750;line-height:1.45}
+.event-meta{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}
+.event-tag{display:inline-block;font-size:11px;border:1px solid #555;border-radius:999px;padding:2px 7px;color:#ddd;margin-right:5px}
+.event-source{overflow-wrap:anywhere}
+@media(max-width:600px){.event-grid{grid-template-columns:1fr}.event-item{padding:9px}}
+
+
+/* Calendar layout refinements */
+.event-caption{margin:2px 0 8px;line-height:1.35}
+#refresh.refresh-button{
+  background:#245b91;
+  border-color:#397bb8;
+  color:#fff;
+  font-weight:750;
+  box-shadow:0 2px 8px rgba(36,91,145,.28);
+}
+#refresh.refresh-button:active{background:#19446f;transform:translateY(1px)}
+.calendar-section{margin-top:24px}
+.section-heading{font-size:20px;line-height:1.35;margin:0 0 12px;font-weight:800}
+.market-panel{margin-top:22px}
+.market-heading{margin-bottom:14px}
+.indicator-history{margin-top:18px;padding-top:15px;border-top:1px solid var(--line)}
+.subsection-heading{font-size:16px;line-height:1.4;margin:0 0 10px}
+
+</style>
+</head>
+<body>
+<main>
+<header><h1>📈 株価カレンダー</h1><span class="muted">β版</span></header>
+
+<section class="panel" id="eventsPanel" aria-labelledby="eventsHeading" style="margin-bottom:18px">
+  <h2 id="eventsHeading" style="font-size:19px;margin:0 0 6px">🗓️ 重要イベント・決算</h2>
+  <p class="note event-caption" id="eventsUpdated">イベント・決算情報を読み込み中…</p>
+  <div class="event-grid">
+    <div>
+      <h3 style="margin:6px 0 10px">🌏 重要イベント</h3>
+      <div class="event-list" id="economicEvents"><p class="note">読み込み中…</p></div>
+    </div>
+    <div>
+      <h3 style="margin:6px 0 10px">📊 重要決算</h3>
+      <div class="event-list" id="earningsEvents"><p class="note">読み込み中…</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="calendar-section" aria-labelledby="calendarHeading">
+  <h2 id="calendarHeading" class="section-heading">📈 株価カレンダー</h2>
+  <div class="toolbar">
+<select id="index" aria-label="指数">
+<option value="nikkei">日経平均</option>
+<option value="topix">TOPIX連動ETF</option>
+<option value="growth250">グロース250連動ETN</option>
+<option value="nasdaq">NASDAQ総合</option>
+<option value="sox">SOX（半導体株指数）</option>
+</select>
+<button id="refresh" class="refresh-button">↻ 更新</button>
+  </div>
+<div class="monthbar">
+<button id="prev">‹ 前月</button>
+<div id="month"></div>
+<button id="next">翌月 ›</button>
+</div>
+<div class="weekdays">
+<div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div><div>日</div>
+</div>
+<div id="calendar" class="calendar"></div>
+<div class="legend"><span>🟢 上昇</span><span>🔴 下落</span><span style="color:#a9d9ff">🔵 休場</span><span style="color:#ffd18a">🟠 データ未取得</span></div>
+<section class="panel" id="detail">
+<div class="muted">日付を選択してください</div>
+<div class="note">株価データの接続準備中です。</div>
+</section>
+<section class="panel">
+<h3 style="margin-top:0">月間のまとめ</h3>
+<div class="metrics">
+<div class="metric"><span class="muted">登録日数</span><strong id="count">0日</strong></div>
+<div class="metric"><span class="muted">上昇 / 下落</span><strong id="days">— / —</strong></div>
+</div>
+<p class="note" id="status">株価データ：未接続</p>
+</section>
+<section class="panel" id="performance">
+  <h3 style="margin-top:0">期間別パフォーマンス</h3>
+  <p class="note" id="performanceDate">比較対象を計算中…</p>
+  <div class="metrics">
+    <div class="metric">
+      <span class="muted" id="monthLabel">月初来<br>（前月末比）</span>
+      <strong id="monthChangeValue">—</strong>
+      <span class="note" id="monthBaseValue">（基準 —）</span>
+    </div>
+    <div class="metric">
+      <span class="muted" id="yearLabel">年初来<br>（前年末比）</span>
+      <strong id="yearChangeValue">—</strong>
+      <span class="note" id="yearBaseValue">（基準 —）</span>
+    </div>
+  </div>
+</section>
+</section>
+
+<section class="panel market-panel" id="marketIndicators">
+  <h2 class="section-heading market-heading">📊 マーケット指標</h2>
+  
+  <div class="metrics">
+    <div class="metric"><span class="muted">日本10年国債利回り（%）</span><strong id="jp10yValue">—</strong><span class="note" id="jp10yDate">未取得</span></div>
+    <div class="metric"><span class="muted">米国10年国債利回り（%）</span><strong id="us10yValue">—</strong><span class="note" id="us10yDate">未取得</span></div>
+    <div class="metric"><span class="muted">WTI原油先物（USD/バレル）</span><strong id="wtiValue">—</strong><span class="note" id="wtiDate">未取得</span></div>
+    <div class="metric"><span class="muted">北海ブレント原油先物（USD/バレル）</span><strong id="brentValue">—</strong><span class="note" id="brentDate">未取得</span></div>
+  </div>
+<div class="indicator-history" id="indicatorHistory">
+  <h3 class="subsection-heading">マーケット指標の履歴</h3>
+  
+  <div class="toolbar">
+    <select id="historyMetric" aria-label="履歴指標">
+      <option value="jp10y">日本10年国債利回り（%）</option>
+      <option value="us10y">米国10年国債利回り（%）</option>
+      <option value="wti">WTI原油先物（USD/バレル）</option>
+      <option value="brent">北海ブレント原油先物（USD/バレル）</option>
+    </select>
+    <select id="historyRange" aria-label="履歴期間">
+      <option value="7">過去1週間</option>
+      <option value="30">過去1か月</option>
+      <option value="365">過去1年</option>
+      <option value="1825">過去5年</option>
+      <option value="3650">過去10年</option>
+      <option value="all">全期間</option>
+    </select>
+  </div>
+  <p class="note" id="historyStatus">履歴データを読み込み中…</p>
+  <div id="historyChart" style="width:100%;overflow:hidden"></div>
+  <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">日付</th><th style="text-align:right;padding:8px;border-bottom:1px solid var(--line)">値</th></tr></thead>
+      <tbody id="historyRows"></tbody>
+    </table>
+  </div>
+</div>
+</section>
+<p class="note">重要イベントと決算情報は、日本時間の午前6時頃に自動更新されます。株価データは日足の終値を表示します。日本の株価指数は日本時間の17時ごろ、米国の株価指数・日米10年国債利回り・原油価格は10時ごろに、それぞれ1日1回自動更新されます（処理の遅延などにより時刻が前後する場合があります）。日本の株価指数は原則として当日の終値、米国の株価指数は時差の関係で原則として前日の終値を表示します。日本10年国債利回りは財務省が公表するデータを参照します（公表時刻は日本時間の9時30分）。米国10年国債利回り、WTI原油価格、北海ブレント原油価格は、更新処理で取得した直近の日足データを表示するため、更新時刻時点の市場価格とは異なる場合があります。 </p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+}[ch]));
+function eventDateLabel(value, time, market) {
+  if (!value) return '日程未定';
+  const d = new Date(value + 'T00:00:00+09:00');
+  if (Number.isNaN(d.getTime())) return escapeHtml(value);
+  const date = `${d.getMonth()+1}/${d.getDate()}（${'日月火水木金土'[d.getDay()]}）`;
+  return `${date}${time ? ' ' + escapeHtml(time) : ''}${market ? ' · ' + escapeHtml(market) : ''}`;
+}
+const eventExpanded = {};
+function renderEventList(targetId, rows, emptyText) {
+  const target = $(targetId);
+  const controlsId = targetId + 'Controls';
+  let controls = $(controlsId);
+  if (!controls) {
+    controls = document.createElement('div');
+    controls.id = controlsId;
+    controls.className = 'event-controls';
+    target.parentNode.insertBefore(controls, target.nextSibling);
+  }
+  if (!Array.isArray(rows) || rows.length === 0) {
+    target.innerHTML = `<p class="note">${escapeHtml(emptyText)}</p>`;
+    controls.innerHTML = '';
+    return;
+  }
+  const todayKey = key(new Date().getFullYear(), new Date().getMonth()+1, new Date().getDate());
+  const end = new Date(); end.setDate(end.getDate() + 14);
+  const endKey = key(end.getFullYear(), end.getMonth()+1, end.getDate());
+  const isEconomic = targetId === 'economicEvents';
+  const visible = rows.filter(row => {
+    // Economic events and earnings both show only today through 14 days ahead.
+    // Undated earnings are retained in events.json but are not shown as upcoming events.
+    if (isEconomic && row.importance !== '最重要') return false;
+    if (!row.date) return false;
+    return row.date >= todayKey && row.date <= endKey;
+  }).sort((a,b) => String(a.date || '9999').localeCompare(String(b.date || '9999')));
+  if (!visible.length) {
+    target.innerHTML = `<p class="note">今後の予定は登録されていません。</p>`;
+    controls.innerHTML = '';
+    return;
+  }
+  const expanded = !!eventExpanded[targetId];
+  const dated = visible.filter(row => row.date);
+  const undated = visible.filter(row => !row.date);
+  // 初期表示は直近5件まで。未確認日程は折りたたみ、必要なときだけ開ける。
+  const initial = [...dated.slice(0, 3), ...(!dated.length ? undated.slice(0, 2) : [])];
+  const shown = expanded ? visible : initial;
+  target.innerHTML = shown.map(row => {
+    const status = row.confirmed === false ? '日程未確認' : (row.importance || row.status || '予定');
+    const source = row.sourceUrl
+      ? `<a href="${escapeHtml(row.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(row.sourceName || '情報源')}</a>`
+      : escapeHtml(row.sourceName || '情報源未登録');
+    const detail = [row.detail, `情報源：${source}`].filter(Boolean).join(' · ');
+    return `<article class="event-item">
+      <div class="event-top"><span class="event-date">${eventDateLabel(row.date, row.timeJst || row.time, row.market)}</span>${isEconomic ? `<span class="event-tag">${escapeHtml(status)}</span>` : ""}</div>
+      <div class="event-title">${escapeHtml(row.name || '名称未登録')}</div>
+      <div class="event-meta">${detail}</div>
+    </article>`;
+  }).join('');
+  const hiddenCount = visible.length - shown.length;
+  controls.innerHTML = `<span class="event-count">${shown.length}件表示 / 全${visible.length}件</span>` +
+    (visible.length > initial.length ? `<button class="event-toggle" type="button" aria-expanded="${expanded}">${expanded ? '折りたたむ' : `すべて表示（あと${hiddenCount}件）`}</button>` : '');
+  const btn = controls.querySelector('button');
+  if (btn) btn.addEventListener('click', () => {
+    eventExpanded[targetId] = !eventExpanded[targetId];
+    renderEventList(targetId, rows, emptyText);
+  });
+}
+async function loadEvents() {
+  const status = $('eventsUpdated');
+  status.textContent = 'イベント・決算情報を読み込み中…';
+  try {
+    const response = await fetch('./events.json', {cache:'no-store'});
+    if (!response.ok) throw new Error(`events.json (${response.status})`);
+    const payload = await response.json();
+    renderEventList('economicEvents', payload.economicEvents, '重要イベントはまだ登録されていません。');
+    renderEventList('earningsEvents', payload.earnings, '決算予定はまだ登録されていません。保有・注目銘柄の登録後に優先表示します。');
+    const updatedAt = String(payload.updatedAt || '日時不明').replace(/\s*（公式スケジュール部分確認）/g, '');
+    status.textContent = `イベント・決算情報：更新 ${updatedAt}`;
+  } catch (error) {
+    renderEventList('economicEvents', [], 'events.json を読み込めません。');
+    renderEventList('earningsEvents', [], 'events.json を読み込めません。');
+    status.textContent = 'イベント・決算情報：読み込み失敗。公開先に events.json があるか確認してください。';
+    console.error(error);
+  }
+}
+
+const today = new Date();
+let year = today.getFullYear();
+let month = today.getMonth() + 1; // 1〜12月
+const key = (y, m, d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+let selected = key(year, month, today.getDate());
+
+// 選択中の指数で、株価データが存在する最新日を選択する。
+function selectLatestAvailableDate() {
+  const dates = Object.entries(prices[index] || {})
+    .filter(([date, value]) => /^\d{4}-\d{2}-\d{2}$/.test(date) && value && Number.isFinite(Number(value.close)))
+    .map(([date]) => date)
+    .sort();
+  if (!dates.length) return false;
+  selected = dates[dates.length - 1];
+  const [y, m] = selected.split('-').map(Number);
+  year = y;
+  month = m;
+  return true;
+}
+let prices = {};
+let index = 'nikkei';
+
+const fmt = n => Math.abs(n).toLocaleString('ja-JP');
+const indexNames = { nikkei: '日経平均', topix: 'TOPIX連動ETF', nasdaq: 'NASDAQ総合', growth250: 'グロース250連動ETN', sox: 'SOX（半導体株指数）' };
+const indexUnits = { nikkei: '円', topix: '円', nasdaq: 'pt', growth250: '円', sox: 'pt' };
+let indicators = {};
+let indicatorHistory = {};
+
+// 日本市場・米国市場の主な休場日（2024〜2027年）
+// 土日は曜日から判定。祝日・臨時休場の情報は必要に応じて更新する。
+const jpHolidays = new Set([
+'2024-01-01','2024-01-02','2024-01-03','2024-01-08','2024-02-11','2024-02-12','2024-02-23','2024-03-20','2024-04-29','2024-05-03','2024-05-04','2024-05-05','2024-05-06','2024-07-15','2024-08-11','2024-08-12','2024-09-16','2024-09-22','2024-09-23','2024-10-14','2024-11-03','2024-11-04','2024-11-23',
+'2025-01-01','2025-01-02','2025-01-03','2025-01-13','2025-02-11','2025-02-23','2025-02-24','2025-03-20','2025-04-29','2025-05-03','2025-05-04','2025-05-05','2025-05-06','2025-07-21','2025-08-11','2025-09-15','2025-09-23','2025-10-13','2025-11-03','2025-11-23','2025-11-24',
+'2026-01-01','2026-01-02','2026-01-03','2026-01-12','2026-02-11','2026-02-23','2026-03-20','2026-04-29','2026-05-03','2026-05-04','2026-05-05','2026-05-06','2026-07-20','2026-08-11','2026-09-21','2026-09-22','2026-09-23','2026-10-12','2026-11-03','2026-11-23',
+'2027-01-01','2027-01-02','2027-01-03','2027-01-11','2027-02-11','2027-02-23','2027-03-21','2027-03-22','2027-04-29','2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11','2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23'
+]);
+const usMarketHolidays = new Set([
+'2024-01-01','2024-01-15','2024-02-19','2024-03-29','2024-05-27','2024-06-19','2024-07-04','2024-09-02','2024-11-28','2024-12-25',
+'2025-01-01','2025-01-09','2025-01-20','2025-02-17','2025-04-18','2025-05-26','2025-06-19','2025-07-04','2025-09-01','2025-11-27','2025-12-25',
+'2026-01-01','2026-01-19','2026-02-16','2026-04-03','2026-05-25','2026-06-19','2026-07-03','2026-09-07','2026-11-26','2026-12-25',
+'2027-01-01','2027-01-18','2027-02-15','2027-03-26','2027-05-31','2027-06-18','2027-07-05','2027-09-06','2027-11-25','2027-12-24'
+]);
+function marketStatus(dateKey, market) {
+  const [y,m,d] = dateKey.split('-').map(Number);
+  const dt = new Date(y,m-1,d);
+  const weekday = dt.getDay();
+  if (weekday === 0 || weekday === 6) return 'holiday';
+  if (market === 'nasdaq') return usMarketHolidays.has(dateKey) ? 'holiday' : 'trading';
+  return jpHolidays.has(dateKey) ? 'holiday' : 'trading';
+}
+function dayStatusLabel(dateKey, market, hasPrice) {
+  const status = marketStatus(dateKey, market);
+  if (status === 'holiday') return { status:'holiday', label:'休場' };
+  if (hasPrice) return { status:'trading', label:'' };
+  return { status:'missing', label:'未取得' };
+}
+
+
+
+async function loadPrices() {
+  $('status').textContent = '株価データ：読み込み中…';
+  try {
+    const response = await fetch('./data.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`data.json の読み込みに失敗しました (${response.status})`);
+    const json = await response.json();
+    prices = json.data || {};
+    indicators = json.indicators || {};
+    selectLatestAvailableDate();
+    $('status').textContent = `株価データ：接続済み（更新 ${json.updatedAt || '日時不明'}）`;
+    render();
+    renderIndicators();
+  } catch (error) {
+    prices = {};
+    indicators = {};
+    $('status').textContent = '株価データ：読み込み失敗。サーバー経由で開いているか、data.jsonを確認してください。';
+    console.error(error);
+    render();
+    renderIndicators();
+  }
+}
+
+
+
+function renderIndicators() {
+  const fmtValue = (value, digits=2) =>
+    value == null || !Number.isFinite(Number(value)) ? '—' :
+    Number(value).toLocaleString('ja-JP', { maximumFractionDigits: digits, minimumFractionDigits: digits });
+  const defs = [
+    ['jp10y', 'jp10yValue', 'jp10yDate', 3, '%'],
+    ['us10y', 'us10yValue', 'us10yDate', 3, '%'],
+    ['wti', 'wtiValue', 'wtiDate', 2, 'USD/バレル'],
+    ['brent', 'brentValue', 'brentDate', 2, 'USD/バレル']
+  ];
+  for (const [key, valueId, dateId, digits, unit] of defs) {
+    const item = indicators[key] || {};
+    const latest = item.latest;
+    const previous = item.previous;
+    const valueEl = $(valueId);
+    valueEl.innerHTML = latest ? (['wti', 'brent'].includes(key) ? `<span class="metric-number">${fmtValue(latest.value, digits)}</span><span class="unit-small"> USD/バレル</span>` : `${fmtValue(latest.value, digits)} ${unit}`) : '取得できません';
+    valueEl.className = 'indicator-value';
+    if (latest && previous && Number.isFinite(Number(previous.value))) {
+      const delta = Number(latest.value) - Number(previous.value);
+      valueEl.classList.add(delta > 0 ? 'positive' : delta < 0 ? 'negative' : 'neutral');
+    } else {
+      valueEl.classList.add('neutral');
+    }
+    $(dateId).textContent = latest ? `基準日：${latest.date || '不明'}` : 'データ未取得';
+  }
+}
+
+function normalizeHistory(json) {
+  // 現在の形式（{"YYYY-MM-DD":{"wti":...}}）と、ラッパー付き形式の両方に対応
+  const source = json?.history || json?.data || json;
+  const result = [];
+  if (Array.isArray(source)) {
+    for (const row of source) {
+      const date = row.date || row.Date || row.day;
+      if (date) result.push({ date: String(date).slice(0, 10), ...row });
+    }
+  } else if (source && typeof source === 'object') {
+    for (const [date, values] of Object.entries(source)) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date) && values && typeof values === 'object') {
+        result.push({ date, ...values });
+      }
+    }
+  }
+  return result.filter(row => /^\d{4}-\d{2}-\d{2}$/.test(row.date))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function renderIndicatorHistory() {
+  const metric = $('historyMetric').value;
+  const range = $('historyRange').value;
+  const label = { jp10y: '日本10年債（%）', us10y: '米国10年債（%）', wti: 'WTI原油（USD/バレル）', brent: '北海ブレント原油（USD/バレル）' }[metric];
+  const digits = ['wti', 'brent'].includes(metric) ? 2 : 3;
+  let rows = indicatorHistory
+    .map(row => ({ date: row.date, value: Number(row[metric]) }))
+    .filter(row => Number.isFinite(row.value));
+
+  if (range === '7') {
+    // 「1週間」は暦日ではなく、最新のデータが存在する7営業日分を表示する。
+    rows = rows.slice(-7);
+  } else if (range !== 'all' && rows.length) {
+    const cutoff = new Date();
+    cutoff.setHours(0, 0, 0, 0);
+    cutoff.setDate(cutoff.getDate() - Number(range));
+    const cutoffKey = `${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,'0')}-${String(cutoff.getDate()).padStart(2,'0')}`;
+    rows = rows.filter(row => row.date >= cutoffKey);
+  }
+
+  $('historyStatus').textContent = rows.length
+    ? `${label}：${rows.length.toLocaleString('ja-JP')}件（${rows[0].date}〜${rows[rows.length-1].date}）`
+    : `${label}の履歴データがありません。market_history.json の形式と公開先を確認してください。`;
+
+  const chart = $('historyChart');
+  if (!rows.length) {
+    chart.innerHTML = '<p class="note">表示できるデータがありません。</p>';
+    $('historyRows').innerHTML = '';
+    return;
+  }
+
+  // グラフは最大約500点に間引く。表示範囲に合わせて縦軸を読みやすい刻みにする。
+  const step = Math.max(1, Math.ceil(rows.length / 500));
+  const plotted = rows.filter((_, i) => i % step === 0 || i === rows.length - 1);
+  const width = 720, height = 270, left = 62, right = 14, top = 18, bottom = 42;
+  const values = plotted.map(r => r.value);
+  const rawMin = Math.min(...values), rawMax = Math.max(...values);
+  const rawSpan = rawMax - rawMin || Math.max(Math.abs(rawMax) * 0.05, 1);
+  const roughStep = rawSpan / 4;
+  const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+  const normalized = roughStep / magnitude;
+  const niceUnit = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 2.5 ? 2.5 : normalized <= 5 ? 5 : 10;
+  const tickStep = niceUnit * magnitude;
+  const min = Math.floor((rawMin - rawSpan * 0.04) / tickStep) * tickStep;
+  const max = Math.ceil((rawMax + rawSpan * 0.04) / tickStep) * tickStep;
+  const firstTime = new Date(rows[0].date + 'T00:00:00Z').getTime();
+  const lastTime = new Date(rows[rows.length - 1].date + 'T00:00:00Z').getTime();
+  const xForDate = date => { if (range === '7') { const i = plotted.findIndex(row => row.date === date); return left + (plotted.length <= 1 ? 0 : i * (width-left-right) / (plotted.length-1)); } return left + (lastTime === firstTime ? 0 : (new Date(date + 'T00:00:00Z').getTime() - firstTime) / (lastTime-firstTime)) * (width-left-right); };
+  const y = value => top + (max-value) * (height-top-bottom) / (max-min || 1);
+  const points = plotted.map(r => `${xForDate(r.date).toFixed(1)},${y(r.value).toFixed(1)}`).join(' ');
+  const tickCount = Math.round((max-min)/tickStep);
+  const grid = Array.from({length: tickCount+1}, (_,i) => {
+    const val = min + tickStep*i, yy = y(val);
+    return `<line x1="${left}" y1="${yy}" x2="${width-right}" y2="${yy}" stroke="#454545" stroke-width="1"/><text x="${left-8}" y="${yy+4}" fill="#aaa" font-size="11" text-anchor="end">${Number(val.toFixed(6)).toLocaleString('ja-JP',{maximumFractionDigits:digits})}</text>`;
+  }).join('');
+
+  // 横軸の目盛り：1か月は6営業日ごと、1年は3か月ごと。
+  // 5年・10年表示は各年の目盛り。全期間では米国10年債・WTI・ブレントは1年ごと、日本10年債は10年ごと。
+  const spanDays = (lastTime-firstTime)/86400000;
+  let xTicks = [];
+  const annualAllMetrics = ['us10y', 'wti', 'brent'];
+  const showAnnualTicks = range === '1825' || range === '3650' ||
+    (range === 'all' && (spanDays >= 900 || annualAllMetrics.includes(metric) || metric === 'jp10y'));
+  if (range === '30') {
+    xTicks = rows.filter((_, i) => i % 6 === 0 || i === rows.length - 1).map((row, i, arr) => {
+      const xx = xForDate(row.date);
+      const anchor = i === 0 ? 'start' : i === arr.length - 1 ? 'end' : 'middle';
+      return `<line x1="${xx}" y1="${top}" x2="${xx}" y2="${height-bottom}" stroke="#383838" stroke-dasharray="2 4"/><text x="${xx}" y="${height-12}" fill="#aaa" font-size="11" text-anchor="${anchor}">${row.date.slice(5).replace('-','/')}</text>`;
+    });
+  } else if (range === '365') {
+    // 約63営業日（約3か月）ごとにラベルを置く。
+    const selected = rows.filter((_, i) => i % 63 === 0 || i === rows.length - 1);
+    xTicks = selected.map((row, i) => {
+      const xx = xForDate(row.date);
+      const anchor = i === 0 ? 'start' : i === selected.length - 1 ? 'end' : 'middle';
+      return `<line x1="${xx}" y1="${top}" x2="${xx}" y2="${height-bottom}" stroke="#383838" stroke-dasharray="2 4"/><text x="${xx}" y="${height-12}" fill="#aaa" font-size="11" text-anchor="${anchor}">${row.date.slice(0,7).replace('-','/')}</text>`;
+    });
+  } else if (showAnnualTicks) {
+    const firstYear = Number(rows[0].date.slice(0,4));
+    const lastYear = Number(rows[rows.length-1].date.slice(0,4));
+    const yearInterval = range === 'all' && metric === 'jp10y' ? 10 : 1;
+    const startYear = range === 'all' && metric === 'jp10y'
+      ? Math.ceil(firstYear / 10) * 10
+      : (range === 'all' && annualAllMetrics.includes(metric) ? firstYear : firstYear);
+    for (let yr=startYear; yr<=lastYear; yr += yearInterval) {
+      const date = `${yr}-01-01`;
+      const xx = xForDate(date);
+      if (xx >= left-1 && xx <= width-right+1) {
+        xTicks.push(`<line x1="${xx}" y1="${top}" x2="${xx}" y2="${height-bottom}" stroke="#383838" stroke-dasharray="3 4"/><text x="${xx}" y="${height-12}" fill="#aaa" font-size="11" text-anchor="middle">${yr}</text>`);
+      }
+    }
+  } else if (range === '7') {
+    // 1週間表示では、7営業日分の日付をすべて横軸に表示する。
+    xTicks = plotted.map(row => {
+      const xx = xForDate(row.date);
+      return `<line x1="${xx}" y1="${top}" x2="${xx}" y2="${height-bottom}" stroke="#383838" stroke-dasharray="2 4"/><text x="${xx}" y="${height-12}" fill="#aaa" font-size="11" text-anchor="middle">${row.date.slice(5).replace('-','/')}</text>`;
+    });
+  } else {
+    const labels = [...new Set([rows[0].date, rows[Math.floor((rows.length-1)/2)].date, rows[rows.length-1].date])];
+    xTicks = labels.map((date,i) => {
+      const xx=xForDate(date);
+      const anchor=i===0?'start':i===labels.length-1?'end':'middle';
+      return `<text x="${xx}" y="${height-12}" fill="#aaa" font-size="11" text-anchor="${anchor}">${date.slice(5).replace('-','/')}</text>`;
+    });
+  }
+
+  chart.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}の履歴グラフ" style="display:block;width:100%;height:auto"><rect width="${width}" height="${height}" fill="transparent"/>${grid}${xTicks.join('')}<polyline points="${points}" fill="none" stroke="#65a9ff" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+  // 表は最新の7件に限定して、スマートフォンでも見やすくする。
+  $('historyRows').innerHTML = rows.slice(-7).reverse().map(row =>
+    `<tr><td style="padding:8px;border-bottom:1px solid var(--line)">${row.date}</td><td style="text-align:right;padding:8px;border-bottom:1px solid var(--line)">${row.value.toLocaleString('ja-JP',{minimumFractionDigits:digits,maximumFractionDigits:digits})}</td></tr>`
+  ).join('');
+}
+
+async function loadIndicatorHistory() {
+  try {
+    const response = await fetch('./market_history.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`market_history.json (${response.status})`);
+    indicatorHistory = normalizeHistory(await response.json());
+    renderIndicatorHistory();
+  } catch (error) {
+    indicatorHistory = [];
+    $('historyStatus').textContent = '履歴データの読み込みに失敗しました。market_history.json が公開先にあるか確認してください。';
+    $('historyChart').innerHTML = '<p class="note">履歴を読み込めませんでした。</p>';
+    $('historyRows').innerHTML = '';
+    console.error(error);
+  }
+}
+
+function sortedPriceEntries(market) {
+  return Object.entries(prices[market] || {})
+    .filter(([date, v]) => /^\d{4}-\d{2}-\d{2}$/.test(date) && Number.isFinite(Number(v?.close)))
+    .sort(([a],[b]) => a.localeCompare(b));
+}
+
+function renderPerformance() {
+  const entries = sortedPriceEntries(index);
+  const chosen = entries.filter(([date]) => date <= selected).slice(-1)[0] || null;
+  const fmtDate = d => d ? `${Number(d.slice(5,7))}月${Number(d.slice(8,10))}日` : '—';
+  const fmtNum = n => Number(n).toLocaleString('ja-JP', {maximumFractionDigits:2});
+  function show(prefix, baseEntry) {
+    const valueEl = $(prefix + 'ChangeValue');
+    const baseEl = $(prefix + 'BaseValue');
+    if (!chosen || !baseEntry || Number(baseEntry[1].close) === 0) {
+      valueEl.textContent = '—';
+      valueEl.className = 'neutral';
+      baseEl.textContent = '（比較データなし）';
+      return;
+    }
+    const diff = Number(chosen[1].close) - Number(baseEntry[1].close);
+    const pct = diff / Number(baseEntry[1].close) * 100;
+    const sign = diff > 0 ? '+' : diff < 0 ? '−' : '±';
+    const pctText = `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
+    valueEl.innerHTML = `${sign}${fmtNum(Math.abs(diff))} <span class="${pct > 0 ? 'positive' : pct < 0 ? 'negative' : 'neutral'}">（${pctText}）</span>`;
+    valueEl.className = diff > 0 ? 'positive' : diff < 0 ? 'negative' : 'neutral';
+    baseEl.textContent = `（基準 ${fmtNum(baseEntry[1].close)}）`;
+  }
+  if (!chosen) {
+    $('performanceDate').textContent = '選択日以前の株価データがありません。';
+    ['month','year'].forEach(k => {
+      $(k+'ChangeValue').textContent='—';
+      $(k+'BaseValue').textContent='—';
+    });
+    return;
+  }
+  const [chosenDate, chosenValue] = chosen;
+  const [y, m] = chosenDate.split('-').map(Number);
+  const monthBase = entries.filter(([date]) => date < `${y}-${String(m).padStart(2,'0')}-01`).slice(-1)[0] || null;
+  const yearBase = entries.filter(([date]) => date < `${y}-01-01`).slice(-1)[0] || null;
+  $('performanceDate').textContent = `選択日までの最新データ：${chosenDate}（${fmtNum(chosenValue.close)}${(['nasdaq','sox'].includes(index) ? 'pt' : '円')}）`;
+  $('monthLabel').innerHTML = monthBase ? `月初来<br>（${fmtDate(monthBase[0])}比）` : '月初来<br>（前月末比）';
+  $('yearLabel').innerHTML = yearBase ? `年初来<br>（${fmtDate(yearBase[0])}比）` : '年初来<br>（前年末比）';
+  show('month', monthBase);
+  show('year', yearBase);
+}
+
+function render() {
+  $('month').textContent = `${year}年${month}月`;
+  const first = new Date(year, month - 1, 1);
+  const total = new Date(year, month, 0).getDate();
+  const offset = (first.getDay() + 6) % 7;
+  const cal = $('calendar');
+  cal.innerHTML = '';
+
+  for (let i = 0; i < offset; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'day empty';
+    cal.appendChild(empty);
+  }
+
+  let up = 0, down = 0, count = 0;
+  for (let d = 1; d <= total; d++) {
+    const k = key(year, month, d);
+    const v = prices[index]?.[k];
+    const state = dayStatusLabel(k, index, !!v);
+    const b = document.createElement('button');
+    b.className = 'day' + (v ? (v.change > 0 ? ' up' : v.change < 0 ? ' down' : '') : state.status === 'holiday' ? ' holiday' : ' missing') + (selected === k ? ' selected' : '');
+    let html = `<span class="date">${d}</span>`;
+    if (v) {
+      count++;
+      if (v.change > 0) up++;
+      if (v.change < 0) down++;
+      html += `<span class="close">${fmt(v.close)}</span>`;
+      html += `<span class="change">${v.change > 0 ? '+' : v.change < 0 ? '−' : '±'}${fmt(v.change)}</span>`;
+      html += `<span class="pct">${v.pct > 0 ? '+' : ''}${Number(v.pct).toFixed(2)}%</span>`;
+    } else {
+      html += `<span class="day-status ${state.status === 'holiday' ? 'holiday-text' : 'missing-text'}">${state.label}</span>`;
+    }
+    b.innerHTML = html;
+    b.addEventListener('click', () => { selected = k; render(); });
+    cal.appendChild(b);
+  }
+
+  $('count').textContent = count + '日';
+  $('days').textContent = count ? `${up}日 / ${down}日` : '— / —';
+  renderPerformance();
+
+  const v = prices[index]?.[selected];
+  const p = selected.split('-').map(Number);
+  const dt = new Date(p[0], p[1] - 1, p[2]);
+  const weekdays = '日月火水木金土';
+  $('detail').innerHTML =
+    `<div class="muted">${p[0]}年${p[1]}月${p[2]}日（${weekdays[dt.getDay()]}）</div>` +
+    (v
+      ? `<div class="big">${fmt(v.close)}${indexUnits[index] || 'pt'}</div><div class="${v.change >= 0 ? 'uptext' : 'downtext'}">${v.change > 0 ? '▲' : v.change < 0 ? '▼' : '—'} ${v.change > 0 ? '+' : v.change < 0 ? '−' : ''}${fmt(v.change)}　${v.pct > 0 ? '+' : ''}${Number(v.pct).toFixed(2)}%</div>`
+      : marketStatus(selected, index) === 'holiday'
+        ? '<div class="big" style="color:#a9d9ff">休場日</div><div class="note">この市場はこの日に取引を行っていません。</div>'
+        : '<div class="big">データ未取得</div><div class="note">取引日と考えられますが、株価データがありません。</div>');
+}
+
+$('prev').onclick = () => {
+  month--;
+  if (month < 1) { month = 12; year--; }
+  selected = key(year, month, 1);
+  render();
+};
+$('next').onclick = () => {
+  month++;
+  if (month > 12) { month = 1; year++; }
+  selected = key(year, month, 1);
+  render();
+};
+$('index').onchange = e => { index = e.target.value; selectLatestAvailableDate(); render(); };
+$('refresh').onclick = () => { loadPrices(); loadIndicatorHistory(); loadEvents(); };
+$('historyMetric').onchange = renderIndicatorHistory;
+$('historyRange').onchange = renderIndicatorHistory;
+
+render();
+loadPrices();
+loadIndicatorHistory();
+loadEvents();
+</script>
+</body>
+</html>
