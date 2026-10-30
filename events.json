@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-30 06:31 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-10-30 09:37 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -12,6 +12,18 @@
       "status": "公式予定",
       "sourceName": "日本銀行 公表予定",
       "sourceUrl": "https://www.boj.or.jp/about/calendar/"
+    },
+    {
+      "date": "2026-10-30",
+      "timeJst": "時刻未定",
+      "market": "日本",
+      "name": "日銀金融政策決定会合・展望レポート",
+      "detail": "政策決定と物価・経済見通しを確認。発表時刻は未定。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "日本銀行 会合日程",
+      "sourceUrl": "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm"
     }
   ],
   "earnings": [
@@ -184,5 +196,5 @@
       "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-06"
     }
   ],
-  "earningsUpdatedAt": "2026-10-30 06:32 JST"
+  "earningsUpdatedAt": "2026-10-30 09:38 JST"
 }
