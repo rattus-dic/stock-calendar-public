@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-30 12:01 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-10-30 12:11 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -30,48 +30,48 @@
       "timeJst": "22:30",
       "market": "米国",
       "name": "米国雇用統計",
-      "detail": "Employment Situation for October 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "detail": "Nonfarm Payrolls (Employment Situation)。対象期間：October 2026。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
       "importance": "最重要",
       "confirmed": true,
       "status": "公式日程",
-      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
-      "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
+      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-30&to=2027-01-28"
     },
     {
       "date": "2026-11-10",
       "timeJst": "22:30",
       "market": "米国",
       "name": "米国CPI（消費者物価指数）",
-      "detail": "Consumer Price Index for October 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "detail": "CPI (Consumer Price Index)。対象期間：October 2026。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
       "importance": "最重要",
       "confirmed": true,
       "status": "公式日程",
-      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
-      "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
+      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-30&to=2027-01-28"
     },
     {
       "date": "2026-11-13",
       "timeJst": "22:30",
       "market": "米国",
       "name": "米国PPI（生産者物価指数）",
-      "detail": "Producer Price Index for October 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "detail": "PPI (Producer Price Index)。対象期間：October 2026。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
       "importance": "最重要",
       "confirmed": true,
       "status": "公式日程",
-      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
-      "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
+      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-30&to=2027-01-28"
     },
     {
       "date": "2026-12-04",
       "timeJst": "22:30",
       "market": "米国",
       "name": "米国雇用統計",
-      "detail": "Employment Situation for November 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "detail": "Nonfarm Payrolls (Employment Situation)。対象期間：November 2026。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
       "importance": "最重要",
       "confirmed": true,
       "status": "公式日程",
-      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
-      "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
+      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-30&to=2027-01-28"
     },
     {
       "date": "2026-12-08",
@@ -102,24 +102,24 @@
       "timeJst": "22:30",
       "market": "米国",
       "name": "米国CPI（消費者物価指数）",
-      "detail": "Consumer Price Index for November 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "detail": "CPI (Consumer Price Index)。対象期間：November 2026。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
       "importance": "最重要",
       "confirmed": true,
       "status": "公式日程",
-      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
-      "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
+      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-30&to=2027-01-28"
     },
     {
       "date": "2026-12-15",
       "timeJst": "22:30",
       "market": "米国",
       "name": "米国PPI（生産者物価指数）",
-      "detail": "Producer Price Index for November 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "detail": "PPI (Producer Price Index)。対象期間：November 2026。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
       "importance": "最重要",
       "confirmed": true,
       "status": "公式日程",
-      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
-      "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
+      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-30&to=2027-01-28"
     },
     {
       "date": "2026-12-18",
@@ -138,36 +138,36 @@
       "timeJst": "22:30",
       "market": "米国",
       "name": "米国雇用統計",
-      "detail": "Employment Situation for December 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "detail": "Nonfarm Payrolls (Employment Situation)。対象期間：December 2026。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
       "importance": "最重要",
       "confirmed": true,
       "status": "公式日程",
-      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
-      "sourceUrl": "https://www.bls.gov/schedule/2027/home.htm"
+      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-30&to=2027-01-28"
     },
     {
       "date": "2027-01-13",
       "timeJst": "22:30",
       "market": "米国",
       "name": "米国CPI（消費者物価指数）",
-      "detail": "Consumer Price Index for December 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "detail": "CPI (Consumer Price Index)。対象期間：December 2026。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
       "importance": "最重要",
       "confirmed": true,
       "status": "公式日程",
-      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
-      "sourceUrl": "https://www.bls.gov/schedule/2027/home.htm"
+      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-30&to=2027-01-28"
     },
     {
       "date": "2027-01-14",
       "timeJst": "22:30",
       "market": "米国",
       "name": "米国PPI（生産者物価指数）",
-      "detail": "Producer Price Index for December 2026。BLS公式年間スケジュールに掲載。米金利・ドル円・株式市場の反応に注目。",
+      "detail": "PPI (Producer Price Index)。対象期間：December 2026。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
       "importance": "最重要",
       "confirmed": true,
       "status": "公式日程",
-      "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
-      "sourceUrl": "https://www.bls.gov/schedule/2027/home.htm"
+      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-30&to=2027-01-28"
     },
     {
       "date": "2027-01-22",
@@ -820,5 +820,5 @@
       "sourceUrl": "https://investor.visa.com/"
     }
   ],
-  "earningsUpdatedAt": "2026-10-30 12:04 JST"
+  "earningsUpdatedAt": "2026-10-30 12:14 JST"
 }
