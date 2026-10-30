@@ -326,6 +326,7 @@ def main():
     parsed = []
     failed = []
     successful = set()
+    fallback_sources = set()
     parsers = [("fed", parse_fomc), ("boj", parse_boj), ("bls", parse_bls)]
     for key, parser in parsers:
         try:
@@ -335,7 +336,8 @@ def main():
                 # An accessible but empty feed is also suspicious; try the
                 # published annual schedule before declaring a successful zero.
                 events = parse_bls_fallback()
-                print("bls: iCalendar returned 0 target events; used official schedule fallback")
+                fallback_sources.add(key)
+                print(f"bls: iCalendar returned 0 target events; official annual schedule fallback parsed {len(events)} events")
             parsed.extend(events)
             successful.add(key)
             print(f"{key}: parsed {len(events)} candidate events")
@@ -345,6 +347,7 @@ def main():
                     events = parse_bls_fallback()
                     parsed.extend(events)
                     successful.add(key)
+                    fallback_sources.add(key)
                     print(f"bls: primary feed failed ({exc}); official schedule fallback parsed {len(events)} events")
                     continue
                 except Exception as fallback_exc:
@@ -406,8 +409,10 @@ def main():
     print(f"Saved {len(data['economicEvents'])} events and preserved {len(data.get('earnings', []))} earnings entries.")
     if failed:
         print("PARTIAL UPDATE: these sources failed; their existing events were preserved: " + "; ".join(f"{k}: {err}" for k, err in failed))
+    elif fallback_sources:
+        print("Official data updated with fallback for: " + ", ".join(sorted(fallback_sources)))
     else:
-        print("All official sources refreshed successfully.")
+        print("All official primary feeds refreshed successfully.")
 
 if __name__ == "__main__":
     main()
