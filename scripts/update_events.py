@@ -183,11 +183,15 @@ def parse_boj(html):
         except (ValueError, KeyError):
             continue
     # Explicit meeting dates from BOJ's official 2026 schedule as fallback.
+    # Check each date independently so that an already-past first meeting day
+    # does not prevent the second day from being added.
     if TODAY.year == 2026 and TODAY <= date(2026,10,29) <= END:
         if not any(e["date"] == "2026-10-29" and "金融政策決定会合" in e["name"] for e in out):
             out.append(mk_event(date(2026,10,29), "日銀金融政策決定会合（1日目）", "日本",
                 "金融政策・金利見通しに注目。", "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm",
                 "日本銀行 会合日程", "時刻未定"))
+
+    if TODAY.year == 2026 and TODAY <= date(2026,10,30) <= END:
         if not any(e["date"] == "2026-10-30" and "金融政策決定会合" in e["name"] for e in out):
             out.append(mk_event(date(2026,10,30), "日銀金融政策決定会合・展望レポート", "日本",
                 "政策決定と物価・経済見通しを確認。発表時刻は未定。",
