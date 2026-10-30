@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Refresh the calendar's high-impact macro events from official schedules (90-day horizon).
+"""Refresh the calendar's high-impact macro events from official schedules with a third-party BLS calendar fallback (90-day horizon).
 
 Earnings entries are preserved from events.json. Company earnings dates are not
 scraped from IR pages yet; they must remain explicitly confirmed/unknown.
@@ -274,6 +274,73 @@ def parse_bls_fallback():
     return sorted(out, key=lambda event: (event["date"], event.get("timeJst", "")))
 
 
+def parse_bls_api():
+    """Read BLS release dates from XOOMAR's public economic-calendar JSON API.
+
+    XOOMAR states that its calendar schedule is compiled from the agencies'
+    published release schedules. This is a third-party mirror, not an official
+    BLS endpoint, so source attribution is explicit in the saved events.
+    """
+    from urllib.parse import urlencode
+
+    params = urlencode({"from": TODAY.isoformat(), "to": END.isoformat()})
+    api_url = "https://xoomar.com/api/markets/calendar?" + params
+    raw = fetch(api_url)
+    payload = json.loads(raw)
+    rows = payload.get("data", []) if isinstance(payload, dict) else payload
+    if not isinstance(rows, list):
+        raise ValueError("XOOMAR API response did not contain a data list")
+
+    out = []
+    seen = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        title = str(row.get("eventName") or row.get("name") or row.get("title") or "")
+        low = title.lower()
+        if "employment situation" in low or "nonfarm payroll" in low or "non-farm payroll" in low:
+            name = "米国雇用統計"
+        elif "consumer price index" in low or re.search(r"\bcpi\b", low):
+            name = "米国CPI（消費者物価指数）"
+        elif "producer price index" in low or re.search(r"\bppi\b", low):
+            name = "米国PPI（生産者物価指数）"
+        else:
+            continue
+
+        scheduled = row.get("scheduledAt") or row.get("scheduled_at") or row.get("date")
+        if not scheduled:
+            continue
+        try:
+            dt = datetime.fromisoformat(str(scheduled).replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                # Unknown timezone is not safe to guess; skip this record.
+                continue
+            release_jst = dt.astimezone(JST)
+        except ValueError:
+            continue
+        event_day = release_jst.date()
+        if not TODAY <= event_day <= END:
+            continue
+        key = (event_day.isoformat(), name)
+        if key in seen:
+            continue
+        seen.add(key)
+        period = row.get("periodLabel") or row.get("period")
+        detail = f"{title}。"
+        if period:
+            detail += f"対象期間：{period}。"
+        detail += "第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。"
+        out.append(mk_event(
+            event_day, name, "米国", detail, api_url,
+            "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
+            release_jst.strftime("%H:%M")
+        ))
+
+    if not out:
+        raise ValueError("XOOMAR API returned no Employment Situation/CPI/PPI releases in the 90-day window")
+    return sorted(out, key=lambda event: (event["date"], event.get("timeJst", "")))
+
+
 class BOJMeetingTableParser(HTMLParser):
     """Extract year-labelled rows from the BOJ official meeting schedule."""
     def __init__(self):
@@ -431,16 +498,24 @@ def main():
         except Exception as exc:
             if key == "bls":
                 try:
-                    events = parse_bls_fallback()
+                    events = parse_bls_api()
                     parsed.extend(events)
                     successful.add(key)
                     fallback_sources.add(key)
-                    print(f"bls: primary feed failed ({exc}); official annual schedule auto-parsed {len(events)} events")
+                    print(f"bls: primary feed failed ({exc}); XOOMAR API parsed {len(events)} events")
                     continue
-                except Exception as fallback_exc:
-                    failed.append((key, f"primary: {exc}; fallback: {fallback_exc}"))
-                    print(f"WARNING bls: primary and fallback failed: {exc}; {fallback_exc}")
-                    continue
+                except Exception as api_exc:
+                    try:
+                        events = parse_bls_fallback()
+                        parsed.extend(events)
+                        successful.add(key)
+                        fallback_sources.add(key)
+                        print(f"bls: primary feed failed ({exc}); XOOMAR API failed ({api_exc}); official annual schedule auto-parsed {len(events)} events")
+                        continue
+                    except Exception as fallback_exc:
+                        failed.append((key, f"primary: {exc}; XOOMAR API: {api_exc}; official annual schedule: {fallback_exc}"))
+                        print(f"WARNING bls: primary and all fallbacks failed: {exc}; {api_exc}; {fallback_exc}")
+                        continue
             failed.append((key, str(exc)))
             print(f"WARNING {key}: {exc}")
 
