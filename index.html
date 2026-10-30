@@ -113,6 +113,58 @@ select{flex:1;min-width:0}
   margin-top: 9px;
 }
 
+
+/* Requested spacing and control-width refinements */
+.header-actions{
+  gap:16px;
+}
+#refresh.refresh-button{
+  background:#286b49;
+  border-color:#3d9568;
+  color:#ffffff;
+  box-shadow:0 2px 8px rgba(40,107,73,.30);
+}
+#refresh.refresh-button:active{
+  background:#1f5639;
+}
+
+/* Give the metric selector more room than the date-range selector. */
+#indicatorHistory > .toolbar{
+  display:grid;
+  grid-template-columns:minmax(0, 1.8fr) minmax(0, 1fr);
+  gap:10px;
+  align-items:stretch;
+}
+#indicatorHistory > .toolbar select{
+  width:100%;
+  min-width:0;
+  flex:initial;
+  padding-left:12px;
+  padding-right:8px;
+  font-size:14px;
+}
+
+/* Tighten the whitespace above the two lower sections. */
+.performance-section{
+  padding-top:10px;
+  margin-top:10px;
+}
+.indicator-history{
+  padding-top:10px;
+  margin-top:10px;
+}
+@media(max-width:430px){
+  .header-actions{gap:14px}
+  #indicatorHistory > .toolbar{
+    grid-template-columns:minmax(0, 1.8fr) minmax(0, 1fr);
+    gap:8px;
+  }
+  #indicatorHistory > .toolbar select{
+    font-size:13px;
+    padding:9px 6px;
+  }
+}
+
 </style>
 </head>
 <body>
