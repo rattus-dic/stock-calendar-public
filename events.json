@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-30 11:20 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-10-30 11:34 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -18,12 +18,12 @@
       "timeJst": "時刻未定",
       "market": "日本",
       "name": "日銀金融政策決定会合・展望レポート",
-      "detail": "政策決定と物価・経済見通しを確認。発表時刻は未定。",
+      "detail": "日銀の金融政策決定と経済・物価見通しを確認。",
       "importance": "最重要",
       "confirmed": true,
       "status": "公式日程",
-      "sourceName": "日本銀行 会合日程（公式日程フォールバック）",
-      "sourceUrl": "https://www.boj.or.jp/en/mopo/mpmsche_minu/index.htm"
+      "sourceName": "日本銀行 金融政策決定会合日程（公式ページ自動取得）",
+      "sourceUrl": "https://www.boj.or.jp/mopo/mpmsche_minu/"
     },
     {
       "date": "2026-11-06",
@@ -122,6 +122,18 @@
       "sourceUrl": "https://www.bls.gov/schedule/2026/home.htm"
     },
     {
+      "date": "2026-12-18",
+      "timeJst": "時刻未定",
+      "market": "日本",
+      "name": "日銀金融政策決定会合",
+      "detail": "日銀の金融政策決定内容を確認。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "日本銀行 金融政策決定会合日程（公式ページ自動取得）",
+      "sourceUrl": "https://www.boj.or.jp/mopo/mpmsche_minu/"
+    },
+    {
       "date": "2027-01-08",
       "timeJst": "22:30",
       "market": "米国",
@@ -156,6 +168,18 @@
       "status": "公式日程",
       "sourceName": "U.S. Bureau of Labor Statistics（公式年間スケジュール・代替登録）",
       "sourceUrl": "https://www.bls.gov/schedule/2027/home.htm"
+    },
+    {
+      "date": "2027-01-22",
+      "timeJst": "時刻未定",
+      "market": "日本",
+      "name": "日銀金融政策決定会合・展望レポート",
+      "detail": "日銀の金融政策決定と経済・物価見通しを確認。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "日本銀行 金融政策決定会合日程（公式ページ自動取得）",
+      "sourceUrl": "https://www.boj.or.jp/mopo/mpmsche_minu/"
     },
     {
       "date": "2027-01-26",
@@ -796,5 +820,5 @@
       "sourceUrl": "https://investor.visa.com/"
     }
   ],
-  "earningsUpdatedAt": "2026-10-30 11:23 JST"
+  "earningsUpdatedAt": "2026-10-30 11:37 JST"
 }
