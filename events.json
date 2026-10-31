@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-31 06:28 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-11-01 06:26 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -23,7 +23,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-31&to=2027-01-29"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-01&to=2027-01-30"
     },
     {
       "date": "2026-11-10",
@@ -35,7 +35,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-31&to=2027-01-29"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-01&to=2027-01-30"
     },
     {
       "date": "2026-11-13",
@@ -47,7 +47,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-31&to=2027-01-29"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-01&to=2027-01-30"
     },
     {
       "date": "2026-12-04",
@@ -59,7 +59,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-31&to=2027-01-29"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-01&to=2027-01-30"
     },
     {
       "date": "2026-12-08",
@@ -95,7 +95,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-31&to=2027-01-29"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-01&to=2027-01-30"
     },
     {
       "date": "2026-12-15",
@@ -107,7 +107,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-31&to=2027-01-29"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-01&to=2027-01-30"
     },
     {
       "date": "2026-12-18",
@@ -131,7 +131,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-31&to=2027-01-29"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-01&to=2027-01-30"
     },
     {
       "date": "2027-01-13",
@@ -143,7 +143,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-31&to=2027-01-29"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-01&to=2027-01-30"
     },
     {
       "date": "2027-01-14",
@@ -155,7 +155,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-10-31&to=2027-01-29"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-01&to=2027-01-30"
     },
     {
       "date": "2027-01-22",
@@ -808,5 +808,5 @@
       "sourceUrl": "https://investor.visa.com/"
     }
   ],
-  "earningsUpdatedAt": "2026-10-31 06:31 JST"
+  "earningsUpdatedAt": "2026-11-01 06:29 JST"
 }
