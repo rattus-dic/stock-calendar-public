@@ -356,17 +356,35 @@ function renderEventList(targetId, rows, emptyText) {
     if (!row.date) return false;
     return row.date >= todayKey && row.date <= endKey;
   }).sort((a,b) => String(a.date || '9999').localeCompare(String(b.date || '9999')));
-  if (!visible.length) {
+
+  // 同じ日付・同じ銘柄の決算情報が複数経路から届いた場合は1件にまとめる。
+  // ticker/code/symbol があれば優先し、なければ銘柄名で判定する。
+  const seenEarnings = new Set();
+  const deduplicated = isEconomic ? visible : visible.filter(row => {
+    const ticker = String(row.ticker || row.code || row.symbol || '').trim().toUpperCase();
+    const normalizedName = String(row.name || '')
+      .replace(/[\s　]/g, '')
+      .replace(/[（(]?(\d{4})[）)]?$/, '')
+      .toLowerCase();
+    const identity = ticker || normalizedName;
+    const dedupeKey = `${row.date}|${String(row.market || 'JP')}|${identity}`;
+    if (seenEarnings.has(dedupeKey)) return false;
+    seenEarnings.add(dedupeKey);
+    return true;
+  });
+  // 以下の表示件数・描画は重複除去後の配列を使う。
+  const displayRows = deduplicated;
+  if (!displayRows.length) {
     target.innerHTML = `<p class="note">今後の予定は登録されていません。</p>`;
     controls.innerHTML = '';
     return;
   }
   const expanded = !!eventExpanded[targetId];
-  const dated = visible.filter(row => row.date);
-  const undated = visible.filter(row => !row.date);
+  const dated = displayRows.filter(row => row.date);
+  const undated = displayRows.filter(row => !row.date);
   // 初期表示は直近5件まで。未確認日程は折りたたみ、必要なときだけ開ける。
   const initial = [...dated.slice(0, 3), ...(!dated.length ? undated.slice(0, 2) : [])];
-  const shown = expanded ? visible : initial;
+  const shown = expanded ? displayRows : initial;
   target.innerHTML = shown.map(row => {
     const status = row.confirmed === false ? '日程未確認' : (row.importance || row.status || '予定');
     const source = row.sourceUrl
@@ -379,8 +397,8 @@ function renderEventList(targetId, rows, emptyText) {
       <div class="event-meta">${detail}</div>
     </article>`;
   }).join('');
-  const hiddenCount = visible.length - shown.length;
-  controls.innerHTML = `<span class="event-count">${shown.length}件表示 / 全${visible.length}件</span>` +
+  const hiddenCount = displayRows.length - shown.length;
+  controls.innerHTML = `<span class="event-count">${shown.length}件表示 / 全${displayRows.length}件</span>` +
     (visible.length > initial.length ? `<button class="event-toggle" type="button" aria-expanded="${expanded}">${expanded ? '折りたたむ' : `すべて表示（あと${hiddenCount}件）`}</button>` : '');
   const btn = controls.querySelector('button');
   if (btn) btn.addEventListener('click', () => {
