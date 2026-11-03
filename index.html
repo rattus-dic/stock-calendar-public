@@ -472,7 +472,7 @@ function marketStatus(dateKey, market) {
   const dt = new Date(y,m-1,d);
   const weekday = dt.getDay();
   if (weekday === 0 || weekday === 6) return 'holiday';
-  if (market === 'nasdaq') return usMarketHolidays.has(dateKey) ? 'holiday' : 'trading';
+  if (market === 'nasdaq' || market === 'sox') return usMarketHolidays.has(dateKey) ? 'holiday' : 'trading';
   return jpHolidays.has(dateKey) ? 'holiday' : 'trading';
 }
 function dayStatusLabel(dateKey, market, hasPrice) {
