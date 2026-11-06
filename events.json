@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-06 06:38 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-11-07 06:32 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -14,18 +14,6 @@
       "sourceUrl": "https://www.boj.or.jp/about/calendar/"
     },
     {
-      "date": "2026-11-06",
-      "timeJst": "22:30",
-      "market": "米国",
-      "name": "米国雇用統計",
-      "detail": "Nonfarm Payrolls (Employment Situation)。対象期間：October 2026。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
-      "importance": "最重要",
-      "confirmed": true,
-      "status": "公式日程",
-      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-06&to=2027-02-04"
-    },
-    {
       "date": "2026-11-10",
       "timeJst": "22:30",
       "market": "米国",
@@ -35,7 +23,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-06&to=2027-02-04"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-07&to=2027-02-05"
     },
     {
       "date": "2026-11-13",
@@ -47,7 +35,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-06&to=2027-02-04"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-07&to=2027-02-05"
     },
     {
       "date": "2026-12-04",
@@ -59,7 +47,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-06&to=2027-02-04"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-07&to=2027-02-05"
     },
     {
       "date": "2026-12-08",
@@ -95,7 +83,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-06&to=2027-02-04"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-07&to=2027-02-05"
     },
     {
       "date": "2026-12-15",
@@ -107,7 +95,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-06&to=2027-02-04"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-07&to=2027-02-05"
     },
     {
       "date": "2026-12-18",
@@ -131,7 +119,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-06&to=2027-02-04"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-07&to=2027-02-05"
     },
     {
       "date": "2027-01-13",
@@ -143,7 +131,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-06&to=2027-02-04"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-07&to=2027-02-05"
     },
     {
       "date": "2027-01-14",
@@ -155,7 +143,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-06&to=2027-02-04"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-07&to=2027-02-05"
     },
     {
       "date": "2027-01-22",
@@ -192,6 +180,18 @@
       "status": "公式日程",
       "sourceName": "Federal Reserve FOMC Calendar",
       "sourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+    },
+    {
+      "date": "2027-02-05",
+      "timeJst": "22:30",
+      "market": "米国",
+      "name": "米国雇用統計",
+      "detail": "Nonfarm Payrolls (Employment Situation)。対象期間：January 2027。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-07&to=2027-02-05"
     }
   ],
   "earnings": [
@@ -376,7 +376,7 @@
       "sourceUrl": "https://finance.matsui.co.jp/find-by-schedule/ajax_calendar_data?date=2026-11-06&page=3&per_page=20"
     },
     {
-      "date": "2026-11-06",
+      "date": "2026-11-07",
       "timeJst": "時刻未定",
       "market": "米国",
       "name": "Berkshire Hathaway（BRK.B）",
@@ -385,7 +385,7 @@
       "confirmed": true,
       "status": "予定日取得済み",
       "sourceName": "Nasdaq Earnings Calendar",
-      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-06"
+      "sourceUrl": "https://api.nasdaq.com/api/calendar/earnings?date=2026-11-07"
     },
     {
       "date": "2026-11-10",
@@ -445,7 +445,7 @@
       "confirmed": true,
       "status": "予定日取得済み",
       "sourceName": "トレーダーズ・ウェブ 決算発表スケジュール",
-      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/4"
+      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/3"
     },
     {
       "date": "2026-11-13",
@@ -457,7 +457,7 @@
       "confirmed": true,
       "status": "予定日取得済み",
       "sourceName": "トレーダーズ・ウェブ 決算発表スケジュール",
-      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/5"
+      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/4"
     },
     {
       "date": "2026-11-17",
@@ -481,7 +481,7 @@
       "confirmed": true,
       "status": "予定日取得済み",
       "sourceName": "トレーダーズ・ウェブ 決算発表スケジュール",
-      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/5"
+      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/4"
     },
     {
       "date": "2026-11-19",
@@ -808,5 +808,5 @@
       "sourceUrl": "https://investor.visa.com/"
     }
   ],
-  "earningsUpdatedAt": "2026-11-06 06:41 JST"
+  "earningsUpdatedAt": "2026-11-07 06:35 JST"
 }
