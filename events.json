@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-10 06:41 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-11-11 06:32 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -14,18 +14,6 @@
       "sourceUrl": "https://www.boj.or.jp/about/calendar/"
     },
     {
-      "date": "2026-11-10",
-      "timeJst": "22:30",
-      "market": "米国",
-      "name": "米国CPI（消費者物価指数）",
-      "detail": "CPI (Consumer Price Index)。対象期間：October 2026。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
-      "importance": "最重要",
-      "confirmed": true,
-      "status": "公式日程",
-      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-10&to=2027-02-08"
-    },
-    {
       "date": "2026-11-13",
       "timeJst": "22:30",
       "market": "米国",
@@ -35,7 +23,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-10&to=2027-02-08"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-11&to=2027-02-09"
     },
     {
       "date": "2026-12-04",
@@ -47,7 +35,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-10&to=2027-02-08"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-11&to=2027-02-09"
     },
     {
       "date": "2026-12-08",
@@ -83,7 +71,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-10&to=2027-02-08"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-11&to=2027-02-09"
     },
     {
       "date": "2026-12-15",
@@ -95,7 +83,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-10&to=2027-02-08"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-11&to=2027-02-09"
     },
     {
       "date": "2026-12-18",
@@ -119,7 +107,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-10&to=2027-02-08"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-11&to=2027-02-09"
     },
     {
       "date": "2027-01-13",
@@ -131,7 +119,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-10&to=2027-02-08"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-11&to=2027-02-09"
     },
     {
       "date": "2027-01-14",
@@ -143,7 +131,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-10&to=2027-02-08"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-11&to=2027-02-09"
     },
     {
       "date": "2027-01-22",
@@ -191,7 +179,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-10&to=2027-02-08"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-11&to=2027-02-09"
     }
   ],
   "earnings": [
@@ -401,18 +389,6 @@
     },
     {
       "date": "2026-11-10",
-      "timeJst": "時刻未定",
-      "market": "日本",
-      "name": "ソフトバンクグループ（9984）",
-      "ticker": "9984",
-      "detail": "会社公式IRで確認した決算発表予定日。発表時刻は未確認。",
-      "confirmed": true,
-      "status": "予定日取得済み",
-      "sourceName": "ソフトバンクグループ公式IR（補完登録）",
-      "sourceUrl": "https://group.softbank/ir/calendar"
-    },
-    {
-      "date": "2026-11-10",
       "timeJst": "14:00",
       "market": "日本",
       "name": "フジクラ（5803）",
@@ -445,7 +421,7 @@
       "confirmed": true,
       "status": "予定日取得済み",
       "sourceName": "トレーダーズ・ウェブ 決算発表スケジュール",
-      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/3"
+      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/2"
     },
     {
       "date": "2026-11-13",
@@ -457,7 +433,7 @@
       "confirmed": true,
       "status": "予定日取得済み",
       "sourceName": "トレーダーズ・ウェブ 決算発表スケジュール",
-      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/4"
+      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/3"
     },
     {
       "date": "2026-11-17",
@@ -808,5 +784,5 @@
       "sourceUrl": "https://investor.visa.com/"
     }
   ],
-  "earningsUpdatedAt": "2026-11-10 06:44 JST"
+  "earningsUpdatedAt": "2026-11-11 06:32 JST"
 }
