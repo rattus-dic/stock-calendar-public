@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-13 10:41 JST（公式スケジュール部分確認）",
+  "updatedAt": "2026-11-14 10:17 JST（公式スケジュール部分確認）",
   "economicEvents": [
     {
       "date": "2026-10-27",
@@ -14,18 +14,6 @@
       "sourceUrl": "https://www.boj.or.jp/about/calendar/"
     },
     {
-      "date": "2026-11-13",
-      "timeJst": "22:30",
-      "market": "米国",
-      "name": "米国PPI（生産者物価指数）",
-      "detail": "PPI (Producer Price Index)。対象期間：October 2026。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
-      "importance": "最重要",
-      "confirmed": true,
-      "status": "公式日程",
-      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-13&to=2027-02-11"
-    },
-    {
       "date": "2026-12-04",
       "timeJst": "22:30",
       "market": "米国",
@@ -35,7 +23,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-13&to=2027-02-11"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-14&to=2027-02-12"
     },
     {
       "date": "2026-12-08",
@@ -71,7 +59,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-13&to=2027-02-11"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-14&to=2027-02-12"
     },
     {
       "date": "2026-12-15",
@@ -83,7 +71,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-13&to=2027-02-11"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-14&to=2027-02-12"
     },
     {
       "date": "2026-12-18",
@@ -107,7 +95,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-13&to=2027-02-11"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-14&to=2027-02-12"
     },
     {
       "date": "2027-01-13",
@@ -119,7 +107,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-13&to=2027-02-11"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-14&to=2027-02-12"
     },
     {
       "date": "2027-01-14",
@@ -131,7 +119,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-13&to=2027-02-11"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-14&to=2027-02-12"
     },
     {
       "date": "2027-01-22",
@@ -179,7 +167,7 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-13&to=2027-02-11"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-14&to=2027-02-12"
     },
     {
       "date": "2027-02-11",
@@ -191,7 +179,19 @@
       "confirmed": true,
       "status": "公式日程",
       "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
-      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-13&to=2027-02-11"
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-14&to=2027-02-12"
+    },
+    {
+      "date": "2027-02-12",
+      "timeJst": "22:30",
+      "market": "米国",
+      "name": "米国PPI（生産者物価指数）",
+      "detail": "PPI (Producer Price Index)。対象期間：January 2027。第三者カレンダー経由の取得。発表日変更時は提供元の更新に依存。",
+      "importance": "最重要",
+      "confirmed": true,
+      "status": "公式日程",
+      "sourceName": "XOOMAR 経済指標カレンダー（非公式・政府機関日程を集約）",
+      "sourceUrl": "https://xoomar.com/api/markets/calendar?from=2026-11-14&to=2027-02-12"
     }
   ],
   "earnings": [
@@ -469,7 +469,7 @@
       "confirmed": true,
       "status": "予定日取得済み",
       "sourceName": "トレーダーズ・ウェブ 決算発表スケジュール",
-      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/2"
+      "sourceUrl": "https://www.traders.co.jp/market_jp/earnings_calendar/all/all/1"
     },
     {
       "date": "2026-11-19",
@@ -796,5 +796,5 @@
       "sourceUrl": "https://investor.visa.com/"
     }
   ],
-  "earningsUpdatedAt": "2026-11-13 10:45 JST"
+  "earningsUpdatedAt": "2026-11-14 10:21 JST"
 }
