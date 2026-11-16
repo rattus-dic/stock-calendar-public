@@ -8,6 +8,11 @@ on:
 permissions:
   contents: write
 
+# Prevent concurrent workflows from overwriting each other's data.json updates.
+concurrency:
+  group: stock-data-update
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -73,11 +78,11 @@ jobs:
                   }
                   previous = value
 
-              # Yahoo chart history can lag the latest quote for ^N225 and 1306.T.
+              # Yahoo chart history can lag the latest quote for Japanese market series.
               # If the daily series is behind, inspect Yahoo's quote timestamp and
               # only append the quote when it is dated after the latest daily bar
               # and the timestamp is at/after the Tokyo market close.
-              if name in ("nikkei", "topix"):
+              if name in ("nikkei", "topix", "growth250"):
                   try:
                       url = f"https://query1.finance.yahoo.com/v8/finance/chart/{quote(symbol, safe='')}"
                       response = requests.get(
