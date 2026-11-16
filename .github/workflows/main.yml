@@ -33,7 +33,7 @@ jobs:
         run: |
           python - <<'PY'
           import json
-import re
+          import re
           from datetime import datetime, timezone
           from io import BytesIO
           from pathlib import Path
